@@ -31,6 +31,8 @@ pnpm add fetch-tech
 bun add fetch-tech
 ```
 
+> **Note**: This package uses Git submodules for technology fingerprints. The submodules will be automatically initialized during installation. If you're cloning the repository directly, make sure to run `git submodule update --init --recursive` after cloning.
+
 ## Quick Start
 
 ```ts
@@ -168,45 +170,3 @@ Your custom fingerprints should follow this structure:
 
 Directory structure:
 ```
-your-project/
-├── fingerprints/
-│   ├── category1/
-│   │   └── technology1.json
-│   └── category2/
-│       └── technology2.json
-└── your-code.ts
-```
-
-## Testing
-
-Each technology has test fixtures to ensure accurate detection:
-
-- `*.pass.html`: Positive detection case
-- `*.fail.html`: Negative case
-
-These fixtures help validate detectors and prevent false positives/negatives.
-
-## Contributing
-
-To add new technology fingerprints:
-
-1. Fork the SDK repository
-2. Create a new branch for your fingerprint
-3. Add your fingerprint JSON file in the appropriate directory
-4. Add test fixtures (pass.html and fail.html)
-5. Commit and push your changes
-6. Create a PR to the SDK repository
-
-## Who It's For
-
-Built for:
-- Technical SEO experts
-- Dev tool makers
-- Security researchers
-- Growth hackers
-- Competitive analysts
-
-## License
-
-MIT License  
-Copyright © 2024 [tzi-labs](https://github.com/tzi-labs) 
