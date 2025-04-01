@@ -1,7 +1,7 @@
 {
-  "name": "whatsthattech",
+  "name": "whats-that-tech",
   "version": "0.0.1",
-  "description": "A tool to detect technologies used in websites",
+  "description": "A tool to detect technologies used in websites. Open-source and self-hosted",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

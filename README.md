@@ -11,6 +11,18 @@ Designed for transparency, speed, and community-driven contributions — this fr
 - 🔄 Support for custom fingerprints
 - 🧪 Built-in test fixtures for validation
 
+
+## Roadmap
+
+Coming soon:
+- Extend base "fingerprints" with your own custom fingerprints that are not in https://github.com/tzi-labs/whats-that-tech-core
+- 🌐 Cloudflare Workers SDK
+- 🐍 Python SDK
+- 🐘 PHP SDK
+- 🐹 Go SDK
+
+Each SDK will maintain the same core detection logic (using git submodule of https://github.com/tzi-labs/whats-that-tech-core) while providing language-specific optimizations and idiomatic APIs.
+
 ## Installation
 
 ```sh
@@ -147,7 +159,7 @@ You can use your own private fingerprints by creating a `fingerprints` directory
 ```ts
 const results = await findTech({
   url: 'https://example.com',
-  customFingerprintsDir: './fingerprints'
+  customFingerprintsDir: './super-secret-fingerprints'
 });
 ```
 
@@ -209,5 +221,5 @@ Built for:
 ## License
 
 MIT License  
-Copyright © 2025 [tzi-labs](https://github.com/tzi-labs) 
+Copyright © 2024 [tzi-labs](https://github.com/tzi-labs) 
 
