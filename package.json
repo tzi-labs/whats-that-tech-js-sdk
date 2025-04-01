@@ -1,0 +1,30 @@
+{
+  "name": "whatsthattech",
+  "version": "0.0.1",
+  "description": "A tool to detect technologies used in websites",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "ts-node test/index.ts"
+  },
+  "keywords": [
+    "technology",
+    "detection",
+    "web",
+    "framework",
+    "cms"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "puppeteer": "^24.5.0"
+  }
+}
