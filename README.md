@@ -5,36 +5,34 @@ Designed for transparency, speed, and community-driven contributions — this fr
 
 ## Features
 
-- 🔍 Accurate technology detection using multiple strategies
 - 🎯 Multiple detection methods (global variables, selectors, network requests, etc.)
 - 📊 Detailed detection results with categories
 - 🚀 Fast and efficient scanning
 - 🔄 Support for custom fingerprints
-- 🎨 Beautiful and modern UI
-- 📱 Responsive design
-- 🔍 Category-based filtering
 - 🧪 Built-in test fixtures for validation
 
 ## Installation
 
 ```sh
 # npm
-npm install fetch-tech
+npm install whats-that-tech
 
 # yarn
-yarn add fetch-tech
+yarn add whats-that-tech
 
 # pnpm
-pnpm add fetch-tech
+pnpm add whats-that-tech
 
 # bun
-bun add fetch-tech
+bun add whats-that-tech
 ```
+
+> **Note**: This package uses Git submodules for technology fingerprints. The submodules will be automatically initialized during installation. If you're cloning the repository directly, make sure to run `git submodule update --init --recursive` after cloning.
 
 ## Quick Start
 
 ```ts
-import { findTech } from 'fetch-tech';
+import { findTech } from 'whats-that-tech';
 
 // Basic usage
 const results = await findTech({
@@ -165,6 +163,7 @@ Your custom fingerprints should follow this structure:
   }
 }
 ```
+
 ## Testing
 
 To run the example files:
@@ -183,7 +182,9 @@ Each technology also has test fixtures to ensure accurate detection:
 - `*.pass.html`: Positive detection case
 - `*.fail.html`: Negative case
 
-These fixtures help validate detectors and prevent false positives/negatives.
+These fixtures help validate detectors and prevent false positives/negatives. As hardcoding URLs that would pass tests today, may not pass the same test tomorrow. To update the test files and tech detector settings you must use whatsthattech-core - https://github.com/tzi-labs/whatsthattech-core.
+
+You can simply just modify the "fingerprints" folder in the root of this SDK as well, create a branch with your updates and it will automaticly become a branch here - https://github.com/tzi-labs/whatsthattech-core. See Contributing section for more details.
 
 ## Contributing
 
@@ -208,5 +209,5 @@ Built for:
 ## License
 
 MIT License  
-Copyright © 2024 [tzi-labs](https://github.com/tzi-labs) 
+Copyright © 2025 [tzi-labs](https://github.com/tzi-labs) 
 
