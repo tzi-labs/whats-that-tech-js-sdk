@@ -23,7 +23,8 @@ export async function analyze({ page, data }: AnalyzeParams, fingerprintPath: st
   const results: DetectionResult = {
     name: fingerprint.name,
     detected: false,
-    details: {}
+    details: {},
+    categories: []
   };
 
   // Temporary storage for detection details
