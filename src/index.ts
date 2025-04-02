@@ -19,14 +19,14 @@ interface FindTechOptions {
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
   const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
   
-  // Use custom fingerprints if provided, otherwise try local core first, then fallback to node_modules
+  // Use custom fingerprints if provided, otherwise try local core first
   let fingerprintDir = customFingerprintsDir;
   if (!fingerprintDir) {
     const localCore = path.join(process.cwd(), 'core');
     if (await fs.access(localCore).then(() => true).catch(() => false)) {
       fingerprintDir = localCore;
     } else {
-      fingerprintDir = path.join(process.cwd(), 'node_modules/whats-that-tech-core');
+      fingerprintDir = path.join(dirname(fileURLToPath(import.meta.url)), 'core');
     }
   }
   const availableCategories = await getCategories(fingerprintDir);

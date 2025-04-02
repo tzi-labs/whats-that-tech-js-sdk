@@ -1,4 +1,6 @@
 import { defineBuildConfig } from 'unbuild'
+import { existsSync } from 'fs'
+import { join } from 'path'
 
 export default defineBuildConfig({
   entries: ['src/index'],
@@ -11,7 +13,7 @@ export default defineBuildConfig({
   hooks: {
     'build:done': async () => {
       const { execa } = await import('execa')
-      // Copy core module to dist
+      // Use whats-that-tech-core from node_modules during build
       await execa('cp', ['-r', 'node_modules/whats-that-tech-core', 'dist/core'])
     }
   }
