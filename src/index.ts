@@ -3,6 +3,8 @@ import { readdir, readFile } from 'fs/promises';
 import path from 'path';
 import { DetectionResult } from './types/tech-detection';
 import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 interface FindTechOptions {
   url: string;
@@ -18,7 +20,7 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
   const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
   
   // Use custom fingerprints if provided, otherwise use core module's fingerprints
-  const fingerprintDir = customFingerprintsDir || path.dirname(require.resolve('whats-that-tech-core'));
+  const fingerprintDir = customFingerprintsDir || path.join(dirname(fileURLToPath(import.meta.url)), '../node_modules/whats-that-tech-core');
   const availableCategories = await getCategories(fingerprintDir);
   
   onProgress?.({
@@ -205,7 +207,7 @@ async function getCategories(fingerprintDir: string): Promise<string[]> {
 }
 
 // CLI support
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   if (args.length === 0) {
     console.error('Please provide URLs as arguments');
@@ -221,6 +223,7 @@ if (require.main === module) {
     }
   };
 
+  // Run the detection
   findTech(options)
     .then(results => {
       console.log(JSON.stringify(results, null, 2));

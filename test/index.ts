@@ -1,34 +1,38 @@
-import { findTech } from '../src/index';
-import fs from 'fs';
-import path from 'path';
+import { findTech } from '../src/index.js';
+import { readdirSync, existsSync } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function runTests(): Promise<void> {
   // Get the core module's directory
-  const coreDir = path.resolve(__dirname, '../node_modules/whats-that-tech-core');
+  const coreDir = resolve(__dirname, '../node_modules/whats-that-tech-core');
   
   // Find all tech directories
-  const techDirs = fs.readdirSync(coreDir).filter(name => 
-    fs.existsSync(path.join(coreDir, name, `${name}.json`))
+  const techDirs = readdirSync(coreDir).filter(name => 
+    existsSync(join(coreDir, name, `${name}.json`))
   );
 
   for (const tech of techDirs) {
-    const techDir = path.join(coreDir, tech);
-    const testDir = path.join(techDir, 'tests');
+    const techDir = join(coreDir, tech);
+    const testDir = join(techDir, 'tests');
 
     console.log(`\n🧪 Testing ${tech}`);
 
-    if (!fs.existsSync(testDir)) {
+    if (!existsSync(testDir)) {
       console.warn(`  ⚠️ No tests found for ${tech}`);
       continue;
     }
 
-    const testFiles = fs.readdirSync(testDir);
+    const testFiles = readdirSync(testDir);
     const passTests = testFiles.filter(file => file.endsWith('.pass.html'));
     const failTests = testFiles.filter(file => file.endsWith('.fail.html'));
 
     // Run pass tests
     for (const testFile of passTests) {
-      const testPath = path.join(testDir, testFile);
+      const testPath = join(testDir, testFile);
       const fileURL = `file://${testPath}`;
 
       const result = await findTech({ 
@@ -52,7 +56,7 @@ async function runTests(): Promise<void> {
 
     // Run fail tests
     for (const testFile of failTests) {
-      const testPath = path.join(testDir, testFile);
+      const testPath = join(testDir, testFile);
       const fileURL = `file://${testPath}`;
 
       const result = await findTech({ 

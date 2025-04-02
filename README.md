@@ -25,88 +25,86 @@ Each SDK will maintain the same core detection logic (using git submodule of htt
 
 ## Installation
 
-```sh
-# npm
-npm install whats-that-tech
-
-# yarn
-yarn add whats-that-tech
-
-# pnpm
+```bash
 pnpm add whats-that-tech
-
-# bun
-bun add whats-that-tech
 ```
 
-> **Note**: This package uses Git submodules for technology fingerprints. The submodules will be automatically initialized during installation. If you're cloning the repository directly, make sure to run `git submodule update --init --recursive` after cloning.
+## Usage
 
-## Quick Start
+### Basic Usage
 
-```ts
+```typescript
 import { findTech } from 'whats-that-tech';
 
-// Basic usage
-const results = await findTech({
-  url: 'https://example.com'
-});
-
-// With progress tracking and specific categories
 const results = await findTech({
   url: 'https://example.com',
-  categories: ['framework', 'cms'], // Only detect frameworks and CMSs
+  headless: true
+});
+
+console.log(results);
+```
+
+### With Progress Updates
+
+```typescript
+import { findTech } from 'whats-that-tech';
+
+const results = await findTech({
+  url: 'https://example.com',
   headless: true,
-  timeout: 30000,
   onProgress: (progress) => {
-    console.log(`Processing: ${progress.currentUrl}`);
+    console.log(progress);
   }
 });
+
+console.log(results);
 ```
 
-## API Reference
+### Running Examples
 
-### `findTech(options: FindTechOptions)`
+```bash
+# Basic example
+pnpm tsx examples/simple-raw-results.ts
 
-Detects technologies used on a website.
-
-**Parameters:**
-```ts
-interface FindTechOptions {
-  url: string;                    // URL to scan
-  headless?: boolean;            // Run browser in headless mode (default: true)
-  timeout?: number;              // Request timeout in ms (default: 30000)
-  categories?: string[];         // Specific categories to detect (e.g., ['framework', 'cms'])
-  excludeCategories?: string[];  // Categories to exclude from detection
-  customFingerprintsDir?: string; // Directory for custom fingerprints
-  onProgress?: (progress: {      // Progress callback
-    current: number;
-    total: number;
-    currentUrl: string;
-    status: 'processing' | 'completed' | 'error';
-    error?: string;
-  }) => void;
-}
+# Example with progress updates
+pnpm tsx examples/chunking-batch-crawl.ts
 ```
 
-**Returns:**
-```ts
-interface DetectionResult {
-  name: string;          // Technology name
-  categories: string[];  // Technology categories
-  detected: boolean;     // Whether the technology was detected
-  details?: {           // Additional detection details
-    [key: string]: boolean;
-  };
-  framework?: {         // Framework information (if applicable)
-    name: string;
-    version: string | null;
-  };
-  theme?: {            // Theme information (if applicable)
-    name: string | null;
-    version: string | null;
-  };
-}
-```
+## API
+
+### `findTech(options: FindTechOptions): Promise<DetectionResult[]>`
+
+#### Options
+
+- `url` (string): The URL to analyze
+- `headless` (boolean, optional): Whether to run in headless mode (default: true)
+- `timeout` (number, optional): Timeout in milliseconds (default: 30000)
+- `categories` (string[], optional): Specific categories to detect
+- `excludeCategories` (string[], optional): Categories to exclude from detection
+- `customFingerprintsDir` (string, optional): Directory for custom fingerprints
+- `onProgress` (function, optional): Callback for progress updates
+
+#### Progress Updates
+
+The `onProgress` callback receives an object with the following properties:
+
+- `current` (number): Current URL being processed
+- `total` (number): Total number of URLs to process
+- `currentUrl` (string): URL currently being processed
+- `status` ('processing' | 'completed' | 'error'): Current status
+- `error` (string, optional): Error message if status is 'error'
+
+#### Return Value
+
+Returns a promise that resolves to an array of `DetectionResult` objects, each containing:
+
+- `name` (string): Name of the detected technology
+- `categories` (string[]): Categories the technology belongs to
+- `detected` (boolean): Whether the technology was detected
+
+## License
+
+MIT
 
 ## Detection Strategies
 

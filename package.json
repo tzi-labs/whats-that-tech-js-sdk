@@ -2,28 +2,28 @@
   "name": "whats-that-tech",
   "version": "0.0.1",
   "description": "A tool to detect technologies used in websites. Open-source and self-hosted",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "repository": "tzi-labs/whats-that-tech-js-sdk",
+  "license": "MIT",
+  "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     }
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
-    "dist/**/*",
-    "src/**/*",
-    "test/**/*",
-    "package.json",
-    "README.md"
+    "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
-    "test": "ts-node test/index.ts"
+    "build": "unbuild",
+    "dev": "node --import tsx src/index.ts",
+    "prepack": "pnpm build",
+    "test": "node --import tsx test/index.ts"
   },
   "keywords": [
     "technology",
@@ -33,15 +33,16 @@
     "cms"
   ],
   "author": "",
-  "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.13.10",
     "@types/puppeteer": "^7.0.4",
-    "ts-node": "^10.9.0",
-    "typescript": "^5.0.0"
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.2",
+    "unbuild": "^3.5.0"
   },
   "dependencies": {
     "puppeteer": "^24.5.0",
     "whats-that-tech-core": "github:tzi-labs/whats-that-tech-core"
-  }
+  },
+  "packageManager": "pnpm@10.6.3"
 }
