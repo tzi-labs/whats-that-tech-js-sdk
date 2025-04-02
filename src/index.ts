@@ -20,7 +20,7 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
   const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
   
   // Use custom fingerprints if provided, otherwise use core module's fingerprints
-  const fingerprintDir = customFingerprintsDir || path.join(dirname(fileURLToPath(import.meta.url)), '../node_modules/whats-that-tech-core');
+  const fingerprintDir = customFingerprintsDir || path.join(dirname(fileURLToPath(import.meta.url)), 'core');
   const availableCategories = await getCategories(fingerprintDir);
   
   onProgress?.({
