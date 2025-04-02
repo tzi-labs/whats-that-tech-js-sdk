@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "ts-node test/index.ts",
-    "postinstall": "git init && git submodule init && git submodule update --init --recursive || true"
+    "postinstall": "ts-node scripts/clone-core.ts"
   },
   "keywords": [
     "technology",
