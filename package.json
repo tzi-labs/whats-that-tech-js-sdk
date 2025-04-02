@@ -8,8 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "test": "ts-node test/index.ts",
-    "postinstall": "ts-node scripts/clone-core.ts"
+    "test": "ts-node test/index.ts"
   },
   "keywords": [
     "technology",
@@ -26,6 +25,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "puppeteer": "^24.5.0"
+    "puppeteer": "^24.5.0",
+    "whats-that-tech-core": "github:tzi-labs/whats-that-tech-core"
   }
 }

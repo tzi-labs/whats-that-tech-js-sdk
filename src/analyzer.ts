@@ -7,6 +7,7 @@ import {
   FrameworkInfo, 
   ThemeInfo 
 } from './types/tech-detection';
+import coreFingerprints from 'whats-that-tech-core';
 
 interface AnalyzeParams {
   page: Page;
@@ -18,8 +19,17 @@ interface AnalyzeParams {
   };
 }
 
-export async function analyze({ page, data }: AnalyzeParams, fingerprintPath: string): Promise<DetectionResult> {
-  const fingerprint: Fingerprint = JSON.parse(fs.readFileSync(fingerprintPath, 'utf-8'));
+export async function analyze({ page, data }: AnalyzeParams, fingerprintPath?: string): Promise<DetectionResult> {
+  let fingerprint: Fingerprint;
+  
+  if (fingerprintPath) {
+    // Use custom fingerprint if path is provided
+    fingerprint = JSON.parse(fs.readFileSync(fingerprintPath, 'utf-8'));
+  } else {
+    // Use core fingerprint by default
+    fingerprint = coreFingerprints;
+  }
+
   const results: DetectionResult = {
     name: fingerprint.name,
     detected: false,

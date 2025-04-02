@@ -36,7 +36,7 @@ async function runBatchCrawl() {
           const techResults = await findTech({
             url,
             headless: true,
-            timeout: 6000 // 6 second timeout
+            timeout: 15000 // 15 second timeout
           }) as DetectionResult[];
           processedCount++;
           const detectedCount = techResults.filter(r => r.detected).length;

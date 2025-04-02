@@ -10,17 +10,20 @@ importers:
     dependencies:
       puppeteer:
         specifier: ^24.5.0
-        version: 24.5.0(typescript@5.5.4)
+        version: 24.5.0(typescript@5.8.2)
+      whats-that-tech-core:
+        specifier: github:tzi-labs/whats-that-tech-core
+        version: https://codeload.github.com/tzi-labs/whats-that-tech-core/tar.gz/c6f465c6eeef22b9c2001997fe71792d0d207d26
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
         version: 20.17.30
       ts-node:
         specifier: ^10.9.0
-        version: 10.9.2(@types/node@20.17.30)(typescript@5.5.4)
+        version: 10.9.2(@types/node@20.17.30)(typescript@5.8.2)
       typescript:
         specifier: ^5.0.0
-        version: 5.5.4
+        version: 5.8.2
 
 packages:
 
@@ -76,8 +79,8 @@ packages:
     resolution: {integrity: sha512-ueEepnujpqee2o5aIYnvHU6C0A42MNdsIDeqy5BydrkuC5R1ZuUFnm27EeFJGoEHJQgn3uleRvmTXaJgfXbt4g==}
     engines: {node: '>=0.4.0'}
 
-  acorn@8.13.0:
-    resolution: {integrity: sha512-8zSiw54Oxrdym50NlZ9sUusyO1Z1ZchgRLWRaK6c86XJFClyCgFKetdowBg5bKxyp/u+CDBJG4Mpp0m3HLZl9w==}
+  acorn@8.14.1:
+    resolution: {integrity: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -433,8 +436,8 @@ packages:
   typed-query-selector@2.12.0:
     resolution: {integrity: sha512-SbklCd1F0EiZOyPiW192rrHZzZ5sBijB6xM+cpmrwDqObvdtunOHHIk9fCGsoK5JVIYXoyEp4iEdE3upFH3PAg==}
 
-  typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+  typescript@5.8.2:
+    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -443,6 +446,10 @@ packages:
 
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
+
+  whats-that-tech-core@https://codeload.github.com/tzi-labs/whats-that-tech-core/tar.gz/c6f465c6eeef22b9c2001997fe71792d0d207d26:
+    resolution: {tarball: https://codeload.github.com/tzi-labs/whats-that-tech-core/tar.gz/c6f465c6eeef22b9c2001997fe71792d0d207d26}
+    version: 0.0.0
 
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
@@ -542,9 +549,9 @@ snapshots:
 
   acorn-walk@8.3.4:
     dependencies:
-      acorn: 8.13.0
+      acorn: 8.14.1
 
-  acorn@8.13.0: {}
+  acorn@8.14.1: {}
 
   agent-base@7.1.3: {}
 
@@ -613,14 +620,14 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  cosmiconfig@9.0.0(typescript@5.5.4):
+  cosmiconfig@9.0.0(typescript@5.8.2):
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.1
       js-yaml: 4.1.0
       parse-json: 5.2.0
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 5.8.2
 
   create-require@1.1.1: {}
 
@@ -821,11 +828,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.5.0(typescript@5.5.4):
+  puppeteer@24.5.0(typescript@5.8.2):
     dependencies:
       '@puppeteer/browsers': 2.9.0
       chromium-bidi: 3.0.0(devtools-protocol@0.0.1413902)
-      cosmiconfig: 9.0.0(typescript@5.5.4)
+      cosmiconfig: 9.0.0(typescript@5.8.2)
       devtools-protocol: 0.0.1413902
       puppeteer-core: 24.5.0
       typed-query-selector: 2.12.0
@@ -899,7 +906,7 @@ snapshots:
     dependencies:
       b4a: 1.6.7
 
-  ts-node@10.9.2(@types/node@20.17.30)(typescript@5.5.4):
+  ts-node@10.9.2(@types/node@20.17.30)(typescript@5.8.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.11
@@ -907,13 +914,13 @@ snapshots:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
       '@types/node': 20.17.30
-      acorn: 8.13.0
+      acorn: 8.14.1
       acorn-walk: 8.3.4
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
       make-error: 1.3.6
-      typescript: 5.5.4
+      typescript: 5.8.2
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
@@ -921,11 +928,13 @@ snapshots:
 
   typed-query-selector@2.12.0: {}
 
-  typescript@5.5.4: {}
+  typescript@5.8.2: {}
 
   undici-types@6.19.8: {}
 
   v8-compile-cache-lib@3.0.1: {}
+
+  whats-that-tech-core@https://codeload.github.com/tzi-labs/whats-that-tech-core/tar.gz/c6f465c6eeef22b9c2001997fe71792d0d207d26: {}
 
   wrap-ansi@7.0.0:
     dependencies:
