@@ -16,7 +16,9 @@ interface FindTechOptions {
 
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
   const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
-  const fingerprintDir = customFingerprintsDir || path.join(__dirname, '..', 'fingerprints');
+  
+  // Use custom fingerprints if provided, otherwise use core module's fingerprints
+  const fingerprintDir = customFingerprintsDir || path.dirname(require.resolve('whats-that-tech-core'));
   const availableCategories = await getCategories(fingerprintDir);
   
   onProgress?.({
