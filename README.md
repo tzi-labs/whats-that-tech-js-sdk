@@ -180,11 +180,11 @@ To run the example files:
 
 ```bash
 # Run the simple example
-pnpm ts-node examples/simple-raw-results.ts
+pnpm tsx examples/simple-raw-results.ts
 
 # Run other examples (if available)
-pnpm ts-node examples/with-categories.ts
-pnpm ts-node examples/with-progress.ts
+pnpm tsx examples/exclude-pixels.ts
+pnpm tsx examples/chunking-batch-crawl.ts
 ```
 
 Each technology also has test fixtures to ensure accurate detection:
@@ -198,14 +198,42 @@ You can simply just modify the "fingerprints" folder in the root of this SDK as 
 
 ## Contributing
 
-To add new technology fingerprints:
+### Contributing to Core Fingerprints
+
+The core technology fingerprints are maintained in a separate repository: [whats-that-tech-core](https://github.com/tzi-labs/whats-that-tech-core). To contribute to the core fingerprints:
+
+1. Clone the core repository locally:
+   ```bash
+   pnpm setup:local
+   ```
+   This will create a `core` directory in your project root. Once cloned, the SDK will automatically use this local `core` directory instead of the one from node_modules, allowing you to make and test changes immediately.
+
+2. Make your changes to the fingerprints in the `core` directory:
+   - Add new fingerprint JSON files in the appropriate category directory
+   - Add test fixtures (pass.html and fail.html) in the tech's test directory
+   - Update existing fingerprints as needed
+   - Your changes will be immediately reflected when running the SDK locally
+
+3. Create a new branch in the core repository:
+   ```bash
+   cd core
+   git checkout -b feature/your-new-tech
+   git add .
+   git commit -m "feat: add new tech detection"
+   git push origin feature/your-new-tech
+   ```
+
+4. Create a Pull Request to the [whats-that-tech-core](https://github.com/tzi-labs/whats-that-tech-core) repository
+
+### Contributing to the SDK
+
+To contribute to the SDK itself:
 
 1. Fork the SDK repository
-2. Create a new branch for your fingerprint
-3. Add your fingerprint JSON file in the appropriate directory
-4. Add test fixtures (pass.html and fail.html)
-5. Commit and push your changes
-6. Create a PR to the SDK repository
+2. Create a new branch for your changes
+3. Make your changes
+4. Commit and push your changes
+5. Create a PR to the SDK repository
 
 ## Who It's For
 

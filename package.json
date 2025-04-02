@@ -23,7 +23,8 @@
     "build": "unbuild",
     "dev": "node --import tsx src/index.ts",
     "prepack": "pnpm build",
-    "test": "node --import tsx test/index.ts"
+    "test": "node --import tsx test/index.ts",
+    "clone:core": "rm -rf core && git clone https://github.com/tzi-labs/whats-that-tech-core.git core"
   },
   "keywords": [
     "technology",

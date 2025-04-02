@@ -7,8 +7,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function runTests(): Promise<void> {
-  // Get the core module's directory
-  const coreDir = resolve(__dirname, '../node_modules/whats-that-tech-core');
+  // Try local core first, then fallback to node_modules
+  const localCore = resolve(process.cwd(), 'core');
+  const nodeModulesCore = resolve(__dirname, '../node_modules/whats-that-tech-core');
+  const coreDir = existsSync(localCore) ? localCore : nodeModulesCore;
   
   // Find all tech directories
   const techDirs = readdirSync(coreDir).filter(name => 

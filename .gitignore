@@ -7,4 +7,4 @@ dist
 *.log*
 *.env*
 # DO NOT ignore the fingerprints submodule
-!fingerprints/ 
+core
