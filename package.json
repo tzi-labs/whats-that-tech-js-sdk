@@ -1,5 +1,5 @@
 {
-  "name": "whats-that-tech",
+  "name": "whats-that-tech-js-sdk",
   "version": "0.0.1",
   "description": "A tool to detect technologies used in websites. Open-source and self-hosted",
   "repository": "tzi-labs/whats-that-tech-js-sdk",
