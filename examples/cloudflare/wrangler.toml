@@ -1,0 +1,12 @@
+name = "whats-that-tech-worker"
+main = "cloudflare-worker.ts"
+workers_dev = true
+compatibility_date = "2024-03-01"
+compatibility_flags = ["nodejs_compat_v2"]
+
+# Browser binding for Puppeteer
+browser = { binding = "MYBROWSER" }
+
+[build]
+command = "pnpm build"
+cwd = ".."

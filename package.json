@@ -11,6 +11,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
+    },
+    "./cloudflare": {
+      "types": "./dist/cloudflare.d.ts",
+      "import": "./dist/cloudflare.mjs",
+      "require": "./dist/cloudflare.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -20,11 +25,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild",
+    "build": "tsx scripts/prepare-cloudflare.ts && unbuild",
     "dev": "node --import tsx src/index.ts",
     "prepack": "pnpm build",
     "test": "node --import tsx test/index.ts",
-    "clone:core": "rm -rf core && git clone https://github.com/tzi-labs/whats-that-tech-core.git core"
+    "setup:local": "rm -rf core && git clone https://github.com/tzi-labs/whats-that-tech-core.git core"
   },
   "keywords": [
     "technology",
@@ -35,6 +40,8 @@
   ],
   "author": "",
   "devDependencies": {
+    "@cloudflare/puppeteer": "^0.0.1",
+    "@cloudflare/workers-types": "^4.20250402.0",
     "@types/node": "^22.13.10",
     "@types/puppeteer": "^7.0.4",
     "execa": "^8.0.1",

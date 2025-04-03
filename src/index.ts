@@ -19,14 +19,19 @@ interface FindTechOptions {
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
   const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
   
-  // Use custom fingerprints if provided, otherwise try local core first
+  // Use custom fingerprints if provided, otherwise try local core first, then fallback to node_modules
   let fingerprintDir = customFingerprintsDir;
   if (!fingerprintDir) {
     const localCore = path.join(process.cwd(), 'core');
     if (await fs.access(localCore).then(() => true).catch(() => false)) {
       fingerprintDir = localCore;
     } else {
-      fingerprintDir = path.join(dirname(fileURLToPath(import.meta.url)), 'core');
+      // For local development, try node_modules
+      fingerprintDir = path.join(process.cwd(), 'node_modules/whats-that-tech-core');
+      // If that doesn't exist, use the package's core directory
+      if (!await fs.access(fingerprintDir).then(() => true).catch(() => false)) {
+        fingerprintDir = path.join(dirname(fileURLToPath(import.meta.url)), 'core');
+      }
     }
   }
   const availableCategories = await getCategories(fingerprintDir);

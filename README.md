@@ -249,3 +249,87 @@ Built for:
 MIT License  
 Copyright © 2024 [tzi-labs](https://github.com/tzi-labs) 
 
+## Cloudflare Workers Support
+
+The SDK includes support for Cloudflare Workers, allowing you to run technology detection directly in Cloudflare's edge network. This is particularly useful for serverless applications and edge computing scenarios.
+
+### Installation
+
+```bash
+pnpm add whats-that-tech
+```
+
+### Usage in Cloudflare Workers
+
+```typescript
+import { findTech } from 'whats-that-tech/cloudflare';
+
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url).searchParams.get('url');
+    
+    if (!url) {
+      return new Response('Please provide a URL parameter', { status: 400 });
+    }
+
+    try {
+      const results = await findTech({
+        url,
+        timeout: 30000,
+        onProgress: (progress) => {
+          console.log(`Status: ${progress.status}`);
+          console.log(`URL: ${progress.currentUrl}`);
+        }
+      }, env);
+
+      return new Response(JSON.stringify(results), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+};
+```
+
+### Configuration
+
+To use the Cloudflare version, you need to:
+
+1. Enable the Browser Rendering API in your Cloudflare Workers project
+2. Add the browser binding to your `wrangler.toml`:
+
+```toml
+[[browser]]
+binding = "MYBROWSER"
+```
+
+3. Deploy your worker:
+
+```bash
+cd examples
+wrangler deploy
+```
+
+### Example Worker
+
+A complete example worker is available in the `examples` directory. To run it:
+
+```bash
+# Build the project
+pnpm build
+
+# Deploy the worker
+cd examples
+wrangler deploy
+```
+
+The worker will be available at your worker's URL with a `?url=` parameter:
+
+```
+https://your-worker.workers.dev/?url=https://example.com
+```
+

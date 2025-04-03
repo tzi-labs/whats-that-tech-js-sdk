@@ -3,7 +3,10 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 
 export default defineBuildConfig({
-  entries: ['src/index'],
+  entries: [
+    'src/index',
+    'src/cloudflare'
+  ],
   clean: true,
   declaration: true,
   rollup: {
