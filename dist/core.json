@@ -1,0 +1,307 @@
+{
+  "facebook-pixel": {
+    "name": "facebook-pixel",
+    "categories": [
+      "pixel",
+      "marketing"
+    ],
+    "detectors": {
+      "requestUrlRegex": "connect\\.facebook\\.net/.*/fbevents\\.js",
+      "globalVariables": [
+        "fbq"
+      ]
+    }
+  },
+  "framer": {
+    "name": "framer",
+    "detectors": {
+      "metaTagCheck": {
+        "name": "generator",
+        "contentRegex": "Framer"
+      },
+      "selectorExists": [
+        "[data-framer-name]",
+        "[data-framer-component-type]",
+        "div[data-framer-page-wrapper]"
+      ],
+      "requestUrlRegex": [
+        "events\\.framer\\.com/script"
+      ]
+    }
+  },
+  "google-analytics": {
+    "name": "google-analytics",
+    "categories": [
+      "pixel",
+      "analytics"
+    ],
+    "detectors": {
+      "globalVariables": [
+        "gtag",
+        "ga",
+        "GoogleAnalyticsObject",
+        "__gaTracker"
+      ],
+      "requestUrlRegex": [
+        "google-analytics\\.com/analytics\\.js",
+        "googletagmanager\\.com/gtag/js",
+        "google-analytics\\.com/collect",
+        "analytics\\.google\\.com"
+      ]
+    }
+  },
+  "google-tag-manager": {
+    "name": "google-tag-manager",
+    "detectors": {
+      "globalVariables": [
+        "dataLayer",
+        "google_tag_manager"
+      ],
+      "requestUrlRegex": [
+        "googletagmanager\\.com/gtm\\.js",
+        "googletagmanager\\.com/ns\\.html"
+      ]
+    }
+  },
+  "gtag": {
+    "name": "gtag",
+    "detectors": {
+      "globalVariables": [
+        "gtag"
+      ],
+      "requestUrlRegex": [
+        "googletagmanager\\.com/gtag/js",
+        "google-analytics\\.com/g/collect"
+      ]
+    }
+  },
+  "hotjar": {
+    "name": "hotjar",
+    "detectors": {
+      "globalVariables": [
+        "hj",
+        "hjSiteSettings",
+        "_hjSettings"
+      ],
+      "requestUrlRegex": [
+        "static\\.hotjar\\.com/c/hotjar-",
+        "vars\\.hotjar\\.com",
+        "script\\.hotjar\\.com",
+        "in\\.hotjar\\.com/api/v2/client/sites"
+      ]
+    }
+  },
+  "klaviyo": {
+    "name": "klaviyo",
+    "detectors": {
+      "globalVariables": [
+        "_learnq",
+        "Klaviyo"
+      ],
+      "requestUrlRegex": [
+        "a\\.klaviyo\\.com/media/js/analytics/analytics\\.js",
+        "static\\.klaviyo\\.com/onsite/js/klaviyo\\.js",
+        "static\\.klaviyo\\.com/onsite/js/klaviyo\\.min\\.js",
+        "a\\.klaviyo\\.com/api/identify",
+        "a\\.klaviyo\\.com/api/track"
+      ]
+    }
+  },
+  "next": {
+    "name": "next",
+    "detectors": {
+      "globalVariables": [
+        "next"
+      ],
+      "htmlRegex": "(data-next-page|data-next-url|__NEXT_DATA__|__next)"
+    }
+  },
+  "nuxt": {
+    "name": "nuxt",
+    "detectors": {
+      "globalVariables": [
+        "__NUXT__",
+        "$nuxt"
+      ],
+      "selectorExists": [
+        "#__nuxt",
+        "#__layout",
+        "[data-n-head]",
+        "[data-n-]"
+      ]
+    }
+  },
+  "react": {
+    "name": "react",
+    "categories": [
+      "framework",
+      "frontend"
+    ],
+    "detectors": {
+      "globalVariables": [
+        "React",
+        "__REACT_DEVTOOLS_GLOBAL_HOOK__"
+      ],
+      "selectorExists": [
+        "div[data-reactroot]",
+        "[data-reactid]",
+        "noscript[data-reactroot]",
+        "#react-root"
+      ]
+    }
+  },
+  "segment": {
+    "name": "segment",
+    "detectors": {
+      "globalVariables": [
+        "analytics",
+        "analytics.initialize",
+        "analytics.invoked"
+      ],
+      "selectorExists": [
+        "script[src*='cdn.segment.com/analytics.js']",
+        "script[src*='cdn.segment.com/analytics.min.js']"
+      ]
+    }
+  },
+  "shopify": {
+    "name": "shopify",
+    "categories": [
+      "cms",
+      "ecommerce"
+    ],
+    "detectors": {
+      "metaTagCheck": {
+        "name": "shopify-checkout-api-token",
+        "contentRegex": ".*"
+      },
+      "globalVariables": [
+        "Shopify",
+        "ShopifyAnalytics"
+      ]
+    }
+  },
+  "squarespace": {
+    "name": "squarespace",
+    "detectors": {
+      "globalVariables": [
+        "Squarespace"
+      ],
+      "metaTagCheck": {
+        "name": "generator",
+        "contentRegex": "Squarespace"
+      }
+    },
+    "themeDetection": {
+      "method": "global",
+      "globalPath": "Static.SQUARESPACE_CONTEXT.templateName"
+    }
+  },
+  "statamic": {
+    "name": "statamic",
+    "detectors": {
+      "metaTagCheck": {
+        "name": "generator",
+        "contentRegex": "Statamic"
+      },
+      "globalVariables": [
+        "Statamic"
+      ],
+      "selectorExists": [
+        "[data-statamic]",
+        "[data-statamic-field]",
+        "[data-statamic-handler]"
+      ]
+    },
+    "themeDetection": {
+      "cssLinkRegex": "/themes/([\\w-]+)/"
+    }
+  },
+  "svelte": {
+    "name": "svelte",
+    "detectors": {
+      "globalVariables": [
+        "__sveltekit",
+        "__SVELTEKIT_DEV__"
+      ],
+      "selectorExists": [
+        "[data-sveltekit]",
+        "[data-sveltekit-preload-data]",
+        "[data-sveltekit-reload]"
+      ]
+    }
+  },
+  "vue": {
+    "name": "vue",
+    "detectors": {
+      "globalVariables": [
+        "Vue",
+        "__VUE_DEVTOOLS_GLOBAL_HOOK__",
+        "VueRouter"
+      ],
+      "selectorExists": [
+        "[data-v-]",
+        "#app[data-v-app]",
+        "[data-server-rendered='true']"
+      ]
+    }
+  },
+  "webflow": {
+    "name": "webflow",
+    "detectors": {
+      "globalVariables": [
+        "Webflow"
+      ],
+      "metaTagCheck": {
+        "name": "generator",
+        "contentRegex": "Webflow"
+      },
+      "selectorExists": [
+        ".w-webflow-badge"
+      ]
+    },
+    "themeDetection": {
+      "cssLinkRegex": "css/([\\w-]+)\\.webflow\\.css"
+    }
+  },
+  "wix": {
+    "name": "wix",
+    "detectors": {
+      "globalVariables": [
+        "wixBiSession",
+        "wixSdk"
+      ],
+      "metaTagCheck": {
+        "name": "generator",
+        "contentRegex": "Wix\\.com"
+      },
+      "selectorExists": [
+        "div[class*='wixui-']"
+      ]
+    }
+  },
+  "wordpress": {
+    "name": "wordpress",
+    "detectors": {
+      "metaTagCheck": {
+        "name": "generator",
+        "contentRegex": "WordPress"
+      },
+      "selectorExists": [
+        "script[src*='wp-includes']",
+        "body.wp-",
+        "#wpadminbar"
+      ],
+      "globalVariables": [
+        "wp",
+        "wpApiSettings",
+        "wc"
+      ],
+      "themeDetection": {
+        "stylesheetRegex": "wp-content\\/themes\\/([-\\w]+)",
+        "bodyClassRegex": "theme-([-\\w]+)",
+        "cssIdentifierRegex": "Theme Name:\\s*([^\\n]+)"
+      }
+    }
+  }
+}

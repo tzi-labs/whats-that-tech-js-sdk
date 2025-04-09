@@ -1,95 +1,120 @@
 'use strict';
 
 const puppeteer = require('puppeteer');
-const fs = require('fs/promises');
+const fs$1 = require('fs/promises');
 const path = require('path');
-const url = require('url');
+const fs = require('fs');
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
 function _interopDefaultCompat (e) { return e && typeof e === 'object' && 'default' in e ? e.default : e; }
 
 const puppeteer__default = /*#__PURE__*/_interopDefaultCompat(puppeteer);
-const fs__default = /*#__PURE__*/_interopDefaultCompat(fs);
-const path__default = /*#__PURE__*/_interopDefaultCompat(path);
+const fs__default = /*#__PURE__*/_interopDefaultCompat(fs$1);
 
-async function findTech(options) {
-  const { url: url$1, headless = true, timeout = 3e4, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
-  let fingerprintDir = customFingerprintsDir;
-  if (!fingerprintDir) {
-    const localCore = path__default.join(process.cwd(), "core");
-    if (await fs__default.access(localCore).then(() => true).catch(() => false)) {
-      fingerprintDir = localCore;
-    } else {
-      fingerprintDir = path__default.join(process.cwd(), "node_modules/whats-that-tech-core");
-      if (!await fs__default.access(fingerprintDir).then(() => true).catch(() => false)) {
-        fingerprintDir = path__default.join(path.dirname(url.fileURLToPath((typeof document === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('index.cjs', document.baseURI).href)))), "core");
+async function loadFingerprints() {
+  const localCorePath = path.join(process.cwd(), "core");
+  const nodeModulesCorePath = path.join(process.cwd(), "node_modules/whats-that-tech-core");
+  const distCorePath = path.join(process.cwd(), "dist/core.json");
+  const rootCorePath = path.join(process.cwd(), "core.json");
+  if (fs.existsSync(localCorePath) || fs.existsSync(nodeModulesCorePath)) {
+    const sourcePath = fs.existsSync(localCorePath) ? localCorePath : nodeModulesCorePath;
+    console.log("Loading fingerprints from:", sourcePath);
+    const techDirs = await fs$1.readdir(sourcePath);
+    const fingerprints = {};
+    for (const tech of techDirs) {
+      const techPath = path.join(sourcePath, tech);
+      const stat = await fs__default.stat(techPath);
+      if (!stat.isDirectory() || tech.startsWith(".")) continue;
+      try {
+        const files = await fs$1.readdir(techPath);
+        for (const file of files) {
+          if (file.endsWith(".json")) {
+            const fingerprintPath = path.join(techPath, file);
+            const content = await fs$1.readFile(fingerprintPath, "utf-8");
+            fingerprints[tech] = JSON.parse(content);
+            console.log(`Loaded fingerprint for ${tech}`);
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to load fingerprint for ${tech}:`, error);
       }
     }
+    if (Object.keys(fingerprints).length === 0) {
+      console.warn("No fingerprints loaded from development mode");
+    } else {
+      console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from development mode`);
+      return fingerprints;
+    }
   }
-  const availableCategories = await getCategories(fingerprintDir);
+  try {
+    const corePath = fs.existsSync(distCorePath) ? distCorePath : rootCorePath;
+    if (fs.existsSync(corePath)) {
+      console.log("Loading fingerprints from:", corePath);
+      const content = await fs$1.readFile(corePath, "utf-8");
+      const fingerprints = JSON.parse(content);
+      console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from core.json`);
+      return fingerprints;
+    }
+  } catch (error) {
+    console.error("Failed to load core.json:", error);
+  }
+  console.error("No fingerprints could be loaded from any source");
+  return {};
+}
+
+async function findTech(options) {
+  const { url, headless = true, timeout = 3e4, categories, excludeCategories, onProgress } = options;
   onProgress?.({
     current: 1,
     total: 1,
-    currentUrl: url$1,
+    currentUrl: url,
     status: "processing"
   });
   try {
-    const results = await processSingleUrl(url$1, fingerprintDir, availableCategories, headless, timeout, categories, excludeCategories, onProgress);
-    onProgress?.({
-      current: 1,
-      total: 1,
-      currentUrl: url$1,
-      status: "completed"
-    });
-    return results;
+    const fingerprints = await loadFingerprints();
+    if (Object.keys(fingerprints).length === 0) {
+      throw new Error("No fingerprints loaded");
+    }
+    const browser = await puppeteer__default.launch({ headless });
+    const page = await browser.newPage();
+    try {
+      await page.goto(url, { waitUntil: "networkidle0", timeout });
+      const results = [];
+      for (const [tech, fingerprint] of Object.entries(fingerprints)) {
+        if (categories && fingerprint.categories) {
+          const hasMatchingCategory = fingerprint.categories.some((cat) => categories.includes(cat));
+          if (!hasMatchingCategory) continue;
+        }
+        if (excludeCategories && fingerprint.categories) {
+          const hasExcludedCategory = fingerprint.categories.some((cat) => excludeCategories.includes(cat));
+          if (hasExcludedCategory) continue;
+        }
+        const detected = await detectTechnology(page, fingerprint);
+        results.push({
+          name: tech,
+          categories: fingerprint.categories || ["unidentified"],
+          detected
+        });
+      }
+      onProgress?.({
+        current: 1,
+        total: 1,
+        currentUrl: url,
+        status: "completed"
+      });
+      return results;
+    } finally {
+      await browser.close();
+    }
   } catch (error) {
     onProgress?.({
       current: 1,
       total: 1,
-      currentUrl: url$1,
+      currentUrl: url,
       status: "error",
       error: error instanceof Error ? error.message : String(error)
     });
     throw error;
-  }
-}
-async function processSingleUrl(url, fingerprintDir, availableCategories, headless, timeout, categories, excludeCategories, onProgress) {
-  const browser = await puppeteer__default.launch({ headless });
-  const page = await browser.newPage();
-  try {
-    await page.goto(url, { waitUntil: "networkidle0", timeout });
-    const results = [];
-    const allFiles = await fs.readdir(fingerprintDir);
-    for (const item of allFiles) {
-      const fullPath = path__default.join(fingerprintDir, item);
-      const stats = await fs__default.stat(fullPath);
-      if (stats.isDirectory()) {
-        const files = await fs.readdir(fullPath);
-        for (const file of files) {
-          if (!file.endsWith(".json")) continue;
-          const fingerprintPath = path__default.join(fullPath, file);
-          const fingerprintContent = await fs.readFile(fingerprintPath, "utf-8");
-          const fingerprint = JSON.parse(fingerprintContent);
-          if (categories && fingerprint.categories) {
-            const hasMatchingCategory = fingerprint.categories.some((cat) => categories.includes(cat));
-            if (!hasMatchingCategory) continue;
-          }
-          if (excludeCategories && fingerprint.categories) {
-            const hasExcludedCategory = fingerprint.categories.some((cat) => excludeCategories.includes(cat));
-            if (hasExcludedCategory) continue;
-          }
-          const detected = await detectTechnology(page, fingerprint);
-          results.push({
-            name: fingerprint.name,
-            categories: fingerprint.categories || ["unidentified"],
-            detected
-          });
-        }
-      }
-    }
-    return results;
-  } finally {
-    await browser.close();
   }
 }
 async function detectTechnology(page, fingerprint) {
@@ -108,9 +133,12 @@ async function detectTechnology(page, fingerprint) {
   }
   if (detectors.requestUrlRegex) {
     const requests = await page.evaluate(() => {
-      return window.performance.getEntriesByType("resource").map((entry) => entry.name);
+      return globalThis.performance.getEntriesByType("resource").map((entry) => entry.name);
     });
-    if (requests.some((url) => new RegExp(detectors.requestUrlRegex).test(url))) {
+    const regexes = Array.isArray(detectors.requestUrlRegex) ? detectors.requestUrlRegex : [detectors.requestUrlRegex];
+    if (requests.some(
+      (url) => regexes.some((regex) => new RegExp(regex).test(url))
+    )) {
       return true;
     }
   }
@@ -123,7 +151,7 @@ async function detectTechnology(page, fingerprint) {
   }
   if (detectors.globalVariables) {
     const globals = await page.evaluate((vars) => {
-      return vars.map((v) => window[v] !== void 0);
+      return vars.map((v) => globalThis[v] !== void 0);
     }, detectors.globalVariables);
     if (globals.some((exists) => exists)) {
       return true;
@@ -131,7 +159,7 @@ async function detectTechnology(page, fingerprint) {
   }
   if (detectors.cssCommentRegex) {
     const styles = await page.evaluate(() => {
-      return Array.from(document.styleSheets).map((sheet) => {
+      return Array.from(globalThis.document.styleSheets).map((sheet) => {
         try {
           return Array.from(sheet.cssRules).map((rule) => rule.cssText).join("\n");
         } catch {
@@ -144,22 +172,6 @@ async function detectTechnology(page, fingerprint) {
     }
   }
   return false;
-}
-async function getCategories(fingerprintDir) {
-  try {
-    const items = await fs.readdir(fingerprintDir);
-    const categories = await Promise.all(
-      items.map(async (item) => {
-        const fullPath = path__default.join(fingerprintDir, item);
-        const stats = await fs__default.stat(fullPath);
-        return stats.isDirectory() && !item.startsWith(".") ? item : null;
-      })
-    );
-    return categories.filter((category) => category !== null);
-  } catch (error) {
-    console.error("Error reading fingerprint directory:", error);
-    return [];
-  }
 }
 if ((typeof document === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('index.cjs', document.baseURI).href)) === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
