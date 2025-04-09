@@ -1,0 +1,16 @@
+{
+	"name": "whats-that-tech-cloudflare-worker",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"build": "tsc cloudflare-worker.ts --outDir dist"
+	},
+	"dependencies": {
+		"whats-that-tech-core": "github:tzi-labs/whats-that-tech-core"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250402.0",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.2"
+	}
+}
