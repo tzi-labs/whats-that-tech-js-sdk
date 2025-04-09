@@ -22,10 +22,11 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "core.json"
   ],
   "scripts": {
-    "build": "tsx scripts/prepare-cloudflare.ts && unbuild",
+    "build": "unbuild",
     "dev": "node --import tsx src/index.ts",
     "prepare": "pnpm build",
     "test": "node --import tsx test/index.ts",

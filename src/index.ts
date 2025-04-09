@@ -1,10 +1,6 @@
 import puppeteer, { Page } from 'puppeteer';
-import { readdir, readFile } from 'fs/promises';
-import path from 'path';
 import { DetectionResult } from './types/tech-detection';
-import fs from 'fs/promises';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { loadFingerprints } from './utils/fingerprints';
 
 interface FindTechOptions {
   url: string;
@@ -17,24 +13,7 @@ interface FindTechOptions {
 }
 
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
-  const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, onProgress } = options;
-  
-  // Use custom fingerprints if provided, otherwise try local core first, then fallback to node_modules
-  let fingerprintDir = customFingerprintsDir;
-  if (!fingerprintDir) {
-    const localCore = path.join(process.cwd(), 'core');
-    if (await fs.access(localCore).then(() => true).catch(() => false)) {
-      fingerprintDir = localCore;
-    } else {
-      // For local development, try node_modules
-      fingerprintDir = path.join(process.cwd(), 'node_modules/whats-that-tech-core');
-      // If that doesn't exist, use the package's core directory
-      if (!await fs.access(fingerprintDir).then(() => true).catch(() => false)) {
-        fingerprintDir = path.join(dirname(fileURLToPath(import.meta.url)), 'core');
-      }
-    }
-  }
-  const availableCategories = await getCategories(fingerprintDir);
+  const { url, headless = true, timeout = 30000, categories, excludeCategories, onProgress } = options;
   
   onProgress?.({
     current: 1,
@@ -44,14 +23,54 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
   });
 
   try {
-    const results = await processSingleUrl(url, fingerprintDir, availableCategories, headless, timeout, categories, excludeCategories, onProgress);
-    onProgress?.({
-      current: 1,
-      total: 1,
-      currentUrl: url,
-      status: 'completed'
-    });
-    return results;
+    // Load fingerprints
+    const fingerprints = await loadFingerprints();
+    if (Object.keys(fingerprints).length === 0) {
+      throw new Error('No fingerprints loaded');
+    }
+
+    const browser = await puppeteer.launch({ headless });
+    const page = await browser.newPage();
+    
+    try {
+      await page.goto(url, { waitUntil: 'networkidle0', timeout });
+      
+      const results: DetectionResult[] = [];
+      
+      // Process each fingerprint
+      for (const [tech, fingerprint] of Object.entries(fingerprints)) {
+        // Skip if categories are specified and this fingerprint doesn't match
+        if (categories && fingerprint.categories) {
+          const hasMatchingCategory = fingerprint.categories.some((cat: string) => categories.includes(cat));
+          if (!hasMatchingCategory) continue;
+        }
+        
+        // Skip if excluded categories are specified and this fingerprint matches any
+        if (excludeCategories && fingerprint.categories) {
+          const hasExcludedCategory = fingerprint.categories.some((cat: string) => excludeCategories.includes(cat));
+          if (hasExcludedCategory) continue;
+        }
+        
+        const detected = await detectTechnology(page, fingerprint);
+        
+        results.push({
+          name: tech,
+          categories: fingerprint.categories || ['unidentified'],
+          detected
+        });
+      }
+      
+      onProgress?.({
+        current: 1,
+        total: 1,
+        currentUrl: url,
+        status: 'completed'
+      });
+      
+      return results;
+    } finally {
+      await browser.close();
+    }
   } catch (error) {
     onProgress?.({
       current: 1,
@@ -61,69 +80,6 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
       error: error instanceof Error ? error.message : String(error)
     });
     throw error;
-  }
-}
-
-async function processSingleUrl(
-  url: string,
-  fingerprintDir: string,
-  availableCategories: string[],
-  headless: boolean,
-  timeout: number,
-  categories?: string[],
-  excludeCategories?: string[],
-  onProgress?: FindTechOptions['onProgress']
-): Promise<DetectionResult[]> {
-  const browser = await puppeteer.launch({ headless });
-  const page = await browser.newPage();
-  
-  try {
-    await page.goto(url, { waitUntil: 'networkidle0', timeout });
-    
-    const results: DetectionResult[] = [];
-    
-    // Read all fingerprint files
-    const allFiles = await readdir(fingerprintDir);
-    for (const item of allFiles) {
-      const fullPath = path.join(fingerprintDir, item);
-      const stats = await fs.stat(fullPath);
-      
-      if (stats.isDirectory()) {
-        const files = await readdir(fullPath);
-        for (const file of files) {
-          if (!file.endsWith('.json')) continue;
-          
-          const fingerprintPath = path.join(fullPath, file);
-          const fingerprintContent = await readFile(fingerprintPath, 'utf-8');
-          const fingerprint = JSON.parse(fingerprintContent);
-          
-          // Skip if categories are specified and this fingerprint doesn't match
-          if (categories && fingerprint.categories) {
-            const hasMatchingCategory = fingerprint.categories.some((cat: string) => categories.includes(cat));
-            if (!hasMatchingCategory) continue;
-          }
-          
-          // Skip if excluded categories are specified and this fingerprint matches any
-          if (excludeCategories && fingerprint.categories) {
-            const hasExcludedCategory = fingerprint.categories.some((cat: string) => excludeCategories.includes(cat));
-            if (hasExcludedCategory) continue;
-          }
-          
-          const detected = await detectTechnology(page, fingerprint);
-          
-          // Create a single result with all categories, defaulting to 'unidentified' if none specified
-          results.push({
-            name: fingerprint.name,
-            categories: fingerprint.categories || ['unidentified'],
-            detected
-          });
-        }
-      }
-    }
-    
-    return results;
-  } finally {
-    await browser.close();
   }
 }
 
@@ -149,11 +105,17 @@ async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> 
   // Check request URLs
   if (detectors.requestUrlRegex) {
     const requests = await page.evaluate(() => {
-      return (window as any).performance.getEntriesByType('resource')
+      return (globalThis as any).performance.getEntriesByType('resource')
         .map((entry: any) => entry.name);
     });
     
-    if (requests.some((url: string) => new RegExp(detectors.requestUrlRegex).test(url))) {
+    const regexes = Array.isArray(detectors.requestUrlRegex) 
+      ? detectors.requestUrlRegex 
+      : [detectors.requestUrlRegex];
+    
+    if (requests.some((url: string) => 
+      regexes.some(regex => new RegExp(regex).test(url))
+    )) {
       return true;
     }
   }
@@ -170,7 +132,7 @@ async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> 
   // Check global variables
   if (detectors.globalVariables) {
     const globals = await page.evaluate((vars: string[]) => {
-      return vars.map((v: string) => (window as any)[v] !== undefined);
+      return vars.map((v: string) => (globalThis as any)[v] !== undefined);
     }, detectors.globalVariables);
     
     if (globals.some((exists: boolean) => exists)) {
@@ -181,11 +143,11 @@ async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> 
   // Check CSS comments
   if (detectors.cssCommentRegex) {
     const styles = await page.evaluate(() => {
-      return Array.from(document.styleSheets)
-        .map(sheet => {
+      return Array.from((globalThis as any).document.styleSheets)
+        .map((sheet: any) => {
           try {
             return Array.from(sheet.cssRules)
-              .map(rule => rule.cssText)
+              .map((rule: any) => rule.cssText)
               .join('\n');
           } catch {
             return '';
@@ -200,23 +162,6 @@ async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> 
   }
   
   return false;
-}
-
-async function getCategories(fingerprintDir: string): Promise<string[]> {
-  try {
-    const items = await readdir(fingerprintDir);
-    const categories = await Promise.all(
-      items.map(async (item) => {
-        const fullPath = path.join(fingerprintDir, item);
-        const stats = await fs.stat(fullPath);
-        return stats.isDirectory() && !item.startsWith('.') ? item : null;
-      })
-    );
-    return categories.filter((category): category is string => category !== null);
-  } catch (error) {
-    console.error('Error reading fingerprint directory:', error);
-    return [];
-  }
 }
 
 // CLI support

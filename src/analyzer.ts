@@ -7,7 +7,7 @@ import {
   FrameworkInfo, 
   ThemeInfo 
 } from './types/tech-detection';
-import coreFingerprints from 'whats-that-tech-core';
+import { loadFingerprints } from './utils/fingerprints';
 
 interface AnalyzeParams {
   page: Page;
@@ -26,8 +26,9 @@ export async function analyze({ page, data }: AnalyzeParams, fingerprintPath?: s
     // Use custom fingerprint if path is provided
     fingerprint = JSON.parse(fs.readFileSync(fingerprintPath, 'utf-8'));
   } else {
-    // Use core fingerprint by default
-    fingerprint = coreFingerprints;
+    // Use core fingerprints by default
+    const fingerprints = await loadFingerprints();
+    fingerprint = fingerprints as Fingerprint;
   }
 
   const results: DetectionResult = {

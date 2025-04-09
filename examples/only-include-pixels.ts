@@ -3,7 +3,7 @@ import { findTech } from '../src/index';
 async function main() {
   try {
     const results = await findTech({
-      url: 'https://shopify.com', // Replace with your target URL
+      url: 'https://wordpress.com', // Replace with your target URL
       timeout: 6000, // 6 second timeout
       categories: ['pixel'], // Only detect pixels
       onProgress: (progress) => {
