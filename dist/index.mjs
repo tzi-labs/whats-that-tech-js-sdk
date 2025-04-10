@@ -1,37 +1,81 @@
 import puppeteer from 'puppeteer';
-import fs, { readdir, readFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import fsPromises, { readdir, readFile } from 'fs/promises';
+import { resolve, dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync, statSync } from 'fs';
 
-async function loadFingerprints(debug = false) {
-  const localCorePath = join(process.cwd(), "core");
-  const nodeModulesCorePath = join(process.cwd(), "node_modules/whats-that-tech-core");
-  const distCorePath = join(process.cwd(), "dist/core.json");
-  const rootCorePath = join(process.cwd(), "core.json");
-  if (debug) {
-    console.log("Looking for fingerprints in:");
-    console.log("- Local core:", localCorePath);
-    console.log("- Node modules:", nodeModulesCorePath);
-    console.log("- Dist core:", distCorePath);
-    console.log("- Root core:", rootCorePath);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+async function loadFingerprints(debug = false, customDir) {
+  const localCorePath = resolve(__dirname, "../../core");
+  const nodeModulesCorePath = resolve(__dirname, "../../node_modules/whats-that-tech-core/core");
+  const distCorePath = resolve(__dirname, "../../dist/core.json");
+  if (customDir && existsSync(customDir)) {
+    if (debug) {
+      console.log(`Attempting to load fingerprints from custom directory: ${customDir}`);
+    }
+    try {
+      const sourcePath = customDir;
+      const techDirs = await readdir(sourcePath);
+      const fingerprints = {};
+      for (const tech of techDirs) {
+        const techPath = join(sourcePath, tech);
+        if (!statSync(techPath).isDirectory() || tech.startsWith(".")) continue;
+        try {
+          const files = await readdir(techPath);
+          for (const file of files) {
+            if (file.endsWith(".json")) {
+              const fingerprintPath = join(techPath, file);
+              const content = await readFile(fingerprintPath, "utf-8");
+              fingerprints[tech] = JSON.parse(content);
+              if (debug) {
+                console.log(`Loaded custom fingerprint for ${tech}`);
+              }
+            }
+          }
+        } catch (error) {
+          if (debug) {
+            console.error(`Failed to load fingerprint for ${tech} from custom directory:`, error);
+          }
+        }
+      }
+      if (Object.keys(fingerprints).length > 0) {
+        if (debug) {
+          console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from custom directory: ${customDir}`);
+        }
+        return fingerprints;
+      } else {
+        if (debug) {
+          console.warn(`Custom directory specified (${customDir}), but no fingerprints were loaded from it.`);
+        }
+      }
+    } catch (error) {
+      if (debug) {
+        console.error(`Error accessing custom directory ${customDir}:`, error);
+      }
+    }
+  } else if (customDir && !existsSync(customDir)) {
+    if (debug) {
+      console.warn(`Custom directory specified (${customDir}), but it does not exist. Falling back to default paths.`);
+    }
   }
   if (existsSync(localCorePath) || existsSync(nodeModulesCorePath)) {
     const sourcePath = existsSync(localCorePath) ? localCorePath : nodeModulesCorePath;
     if (debug) {
-      console.log("Loading fingerprints from:", sourcePath);
+      console.log("Loading fingerprints from development path:", sourcePath);
     }
-    const techDirs = await readdir(sourcePath);
+    const techDirs = await fsPromises.readdir(sourcePath);
     const fingerprints = {};
     for (const tech of techDirs) {
       const techPath = join(sourcePath, tech);
-      const stat = await fs.stat(techPath);
+      const stat = await fsPromises.stat(techPath);
       if (!stat.isDirectory() || tech.startsWith(".")) continue;
       try {
-        const files = await readdir(techPath);
+        const files = await fsPromises.readdir(techPath);
         for (const file of files) {
           if (file.endsWith(".json")) {
             const fingerprintPath = join(techPath, file);
-            const content = await readFile(fingerprintPath, "utf-8");
+            const content = await fsPromises.readFile(fingerprintPath, "utf-8");
             fingerprints[tech] = JSON.parse(content);
             if (debug) {
               console.log(`Loaded fingerprint for ${tech}`);
@@ -51,12 +95,12 @@ async function loadFingerprints(debug = false) {
     return fingerprints;
   }
   try {
-    const corePath = existsSync(distCorePath) ? distCorePath : rootCorePath;
-    if (existsSync(corePath)) {
+    if (existsSync(distCorePath)) {
+      const corePath = distCorePath;
       if (debug) {
-        console.log("Loading fingerprints from:", corePath);
+        console.log("Loading fingerprints from distribution/fallback path:", corePath);
       }
-      const content = await readFile(corePath, "utf-8");
+      const content = await fsPromises.readFile(corePath, "utf-8");
       const fingerprints = JSON.parse(content);
       if (debug) {
         console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from core.json`);
@@ -75,7 +119,7 @@ async function loadFingerprints(debug = false) {
 }
 
 async function findTech(options) {
-  const { url, headless = true, timeout = 3e4, categories, excludeCategories, debug = false, onProgress } = options;
+  const { url, headless = true, timeout = 3e4, categories, excludeCategories, customFingerprintsDir, debug = false, onProgress } = options;
   onProgress?.({
     current: 1,
     total: 1,
@@ -83,7 +127,14 @@ async function findTech(options) {
     status: "processing"
   });
   try {
-    const fingerprints = await loadFingerprints(debug);
+    if (debug) {
+      if (customFingerprintsDir) {
+        console.log(`Debug: Attempting to load fingerprints from custom directory specified: ${customFingerprintsDir}`);
+      } else {
+        console.log("Debug: No custom fingerprint directory specified. Using default path resolution (Dev -> Node Modules -> Dist -> Root).");
+      }
+    }
+    const fingerprints = await loadFingerprints(debug, customFingerprintsDir);
     if (Object.keys(fingerprints).length === 0) {
       throw new Error("No fingerprints loaded");
     }
