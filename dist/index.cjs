@@ -15,9 +15,12 @@ const fsPromises__default = /*#__PURE__*/_interopDefaultCompat(fsPromises);
 const __filename$1 = url.fileURLToPath((typeof document === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('index.cjs', document.baseURI).href)));
 const __dirname$1 = path.dirname(__filename$1);
 async function loadFingerprints(debug = false, customDir) {
-  const localCorePath = path.resolve(__dirname$1, "../../core");
-  const nodeModulesCorePath = path.resolve(__dirname$1, "../../node_modules/whats-that-tech-core/core");
-  const distCorePath = path.resolve(__dirname$1, "../../dist/core.json");
+  const packagedDistCorePath = path.resolve(__dirname$1, "core.json");
+  const devDistCorePath = path.resolve(__dirname$1, "../../dist/core.json");
+  if (debug) {
+    console.log(`[Debug Path Def] packagedDistCorePath: ${packagedDistCorePath}`);
+    console.log(`[Debug Path Def] devDistCorePath: ${devDistCorePath}`);
+  }
   if (customDir && fs.existsSync(customDir)) {
     if (debug) {
       console.log(`Attempting to load fingerprints from custom directory: ${customDir}`);
@@ -67,61 +70,38 @@ async function loadFingerprints(debug = false, customDir) {
       console.warn(`Custom directory specified (${customDir}), but it does not exist. Falling back to default paths.`);
     }
   }
-  if (fs.existsSync(localCorePath) || fs.existsSync(nodeModulesCorePath)) {
-    const sourcePath = fs.existsSync(localCorePath) ? localCorePath : nodeModulesCorePath;
+  let corePathToTry = null;
+  let loadedFingerprints = null;
+  if (fs.existsSync(packagedDistCorePath)) {
+    corePathToTry = packagedDistCorePath;
+    if (debug) console.log(`[Debug] Found potential core.json at packaged path: ${corePathToTry}`);
+  } else if (fs.existsSync(devDistCorePath)) {
+    corePathToTry = devDistCorePath;
+    if (debug) console.log(`[Debug] Found potential core.json at dev->dist path: ${corePathToTry}`);
+  } else {
     if (debug) {
-      console.log("Loading fingerprints from development path:", sourcePath);
+      console.log(`[Debug] Neither packaged path (${packagedDistCorePath}) nor dev->dist path (${devDistCorePath}) exists.`);
     }
-    const techDirs = await fsPromises__default.readdir(sourcePath);
-    const fingerprints = {};
-    for (const tech of techDirs) {
-      const techPath = path.join(sourcePath, tech);
-      const stat = await fsPromises__default.stat(techPath);
-      if (!stat.isDirectory() || tech.startsWith(".")) continue;
-      try {
-        const files = await fsPromises__default.readdir(techPath);
-        for (const file of files) {
-          if (file.endsWith(".json")) {
-            const fingerprintPath = path.join(techPath, file);
-            const content = await fsPromises__default.readFile(fingerprintPath, "utf-8");
-            fingerprints[tech] = JSON.parse(content);
-            if (debug) {
-              console.log(`Loaded fingerprint for ${tech}`);
-            }
-          }
-        }
-      } catch (error) {
-        if (debug) {
-          console.error(`Failed to load fingerprint for ${tech}:`, error);
-        }
-        continue;
-      }
-    }
-    if (debug) {
-      console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from development mode`);
-    }
-    return fingerprints;
   }
-  try {
-    if (fs.existsSync(distCorePath)) {
-      const corePath = distCorePath;
-      if (debug) {
-        console.log("Loading fingerprints from distribution/fallback path:", corePath);
+  if (corePathToTry) {
+    if (debug) console.log(`Attempting to load fingerprints from: ${corePathToTry}`);
+    try {
+      const content = await fsPromises__default.readFile(corePathToTry, "utf-8");
+      loadedFingerprints = JSON.parse(content);
+      if (loadedFingerprints && debug) {
+        console.log(`Loaded ${Object.keys(loadedFingerprints).length} fingerprints from ${corePathToTry}`);
       }
-      const content = await fsPromises__default.readFile(corePath, "utf-8");
-      const fingerprints = JSON.parse(content);
-      if (debug) {
-        console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from core.json`);
+      if (loadedFingerprints) {
+        return loadedFingerprints;
       }
-      return fingerprints;
-    }
-  } catch (error) {
-    if (debug) {
-      console.error("Failed to load core.json:", error);
+    } catch (error) {
+      if (debug) {
+        console.error(`Failed to load/parse core.json from ${corePathToTry}:`, error);
+      }
     }
   }
   if (debug) {
-    console.error("No fingerprints could be loaded from any source");
+    console.error("No fingerprints could be loaded from any source (Custom Dir or dist/core.json)");
   }
   return {};
 }
