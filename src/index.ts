@@ -53,6 +53,12 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
     try {
       await page.goto(url, { waitUntil: 'networkidle0', timeout });
       
+      // Capture cookies immediately after page load
+      const pageLoadCookies = await page.cookies();
+      if (debug) {
+        console.log('Cookies captured after page load:', pageLoadCookies.map(c => c.name));
+      }
+      
       const results: DetectionResult[] = [];
       
       // Process each fingerprint
@@ -69,7 +75,7 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
           if (hasExcludedCategory) continue;
         }
         
-        const detected = await detectTechnology(page, fingerprint);
+        const detected = await detectTechnology(page, fingerprint, pageLoadCookies);
         
         if (debug && detected) {
           console.log(`Detected ${tech} with categories:`, fingerprint.categories);
@@ -105,7 +111,7 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
   }
 }
 
-async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> {
+async function detectTechnology(page: Page, fingerprint: any, pageLoadCookies: Array<{name: string}> = []): Promise<boolean> {
   const { detectors } = fingerprint;
   
   // Check HTML content
@@ -158,6 +164,29 @@ async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> 
     }, detectors.globalVariables);
     
     if (globals.some((exists: boolean) => exists)) {
+      return true;
+    }
+  }
+  
+  // Check cookies - Use cookies captured earlier
+  if (detectors.cookieCheck) {
+    // First check cookies captured right after page load
+    const cookieNames = pageLoadCookies.map(cookie => cookie.name);
+    
+    if (cookieNames.some(name => 
+      detectors.cookieCheck.includes(name)
+    )) {
+      return true;
+    }
+    
+    // If we don't find cookies from page load, check current cookies as a fallback
+    // (Some cookies might be set by JavaScript after page load)
+    const currentCookies = await page.cookies();
+    const currentCookieNames = currentCookies.map(cookie => cookie.name);
+    
+    if (currentCookieNames.some(name => 
+      detectors.cookieCheck.includes(name)
+    )) {
       return true;
     }
   }

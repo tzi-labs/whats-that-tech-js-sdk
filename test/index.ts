@@ -37,6 +37,7 @@ async function runTests(): Promise<void> {
       const testPath = join(testDir, testFile);
       const fileURL = `file://${testPath}`;
 
+      console.log(`  Running PASS test: ${testPath}`);
       const result = await findTech({ 
         url: fileURL,
         headless: true,
@@ -45,13 +46,13 @@ async function runTests(): Promise<void> {
 
       const techResult = result.find(r => r.name === tech);
       const passed = techResult?.detected === true;
-      console.log(`  ${passed ? '✅' : '❌'} PASS test: ${testFile} → Detected=${techResult?.detected}`);
+      console.log(`    ${passed ? '✅' : '❌'} Result: Detected=${techResult?.detected}`);
       
       if (!passed) {
-        console.log('    Diagnostics for failed PASS test:');
-        console.log('    Expected: detection=true, Actual: detection=false');
+        console.log('      Diagnostics for failed PASS test:');
+        console.log('      Expected: detection=true, Actual: detection=false');
         if (techResult) {
-          console.log('    Details:', techResult.details);
+          console.log('      Details:', techResult.details);
         }
       }
     }
@@ -61,6 +62,7 @@ async function runTests(): Promise<void> {
       const testPath = join(testDir, testFile);
       const fileURL = `file://${testPath}`;
 
+      console.log(`  Running FAIL test: ${testPath}`);
       const result = await findTech({ 
         url: fileURL,
         headless: true,
@@ -69,13 +71,13 @@ async function runTests(): Promise<void> {
 
       const techResult = result.find(r => r.name === tech);
       const passed = techResult?.detected === false;
-      console.log(`  ${passed ? '✅' : '❌'} FAIL test: ${testFile} → Detected=${techResult?.detected}`);
+      console.log(`    ${passed ? '✅' : '❌'} Result: Detected=${techResult?.detected}`);
       
       if (!passed) {
-        console.log('    Diagnostics for failed FAIL test:');
-        console.log('    Expected: detection=false, Actual: detection=true');
+        console.log('      Diagnostics for failed FAIL test:');
+        console.log('      Expected: detection=false, Actual: detection=true');
         if (techResult) {
-          console.log('    Details:', techResult.details);
+          console.log('      Details:', techResult.details);
         }
       }
     }
