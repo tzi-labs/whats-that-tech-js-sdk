@@ -11,15 +11,21 @@ function _interopDefaultCompat (e) { return e && typeof e === 'object' && 'defau
 const puppeteer__default = /*#__PURE__*/_interopDefaultCompat(puppeteer);
 const fs__default = /*#__PURE__*/_interopDefaultCompat(fs$1);
 
-const isDevelopment = process.env.NODE_ENV === "development";
-async function loadFingerprints() {
+async function loadFingerprints(debug = false) {
   const localCorePath = path.join(process.cwd(), "core");
   const nodeModulesCorePath = path.join(process.cwd(), "node_modules/whats-that-tech-core");
   const distCorePath = path.join(process.cwd(), "dist/core.json");
   const rootCorePath = path.join(process.cwd(), "core.json");
+  if (debug) {
+    console.log("Looking for fingerprints in:");
+    console.log("- Local core:", localCorePath);
+    console.log("- Node modules:", nodeModulesCorePath);
+    console.log("- Dist core:", distCorePath);
+    console.log("- Root core:", rootCorePath);
+  }
   if (fs.existsSync(localCorePath) || fs.existsSync(nodeModulesCorePath)) {
     const sourcePath = fs.existsSync(localCorePath) ? localCorePath : nodeModulesCorePath;
-    if (isDevelopment) {
+    if (debug) {
       console.log("Loading fingerprints from:", sourcePath);
     }
     const techDirs = await fs$1.readdir(sourcePath);
@@ -35,52 +41,49 @@ async function loadFingerprints() {
             const fingerprintPath = path.join(techPath, file);
             const content = await fs$1.readFile(fingerprintPath, "utf-8");
             fingerprints[tech] = JSON.parse(content);
-            if (isDevelopment) {
+            if (debug) {
               console.log(`Loaded fingerprint for ${tech}`);
             }
           }
         }
       } catch (error) {
-        if (isDevelopment) {
+        if (debug) {
           console.error(`Failed to load fingerprint for ${tech}:`, error);
         }
+        continue;
       }
     }
-    if (isDevelopment) {
-      if (Object.keys(fingerprints).length === 0) {
-        console.warn("No fingerprints loaded from development mode");
-      } else {
-        console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from development mode`);
-      }
+    if (debug) {
+      console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from development mode`);
     }
     return fingerprints;
   }
   try {
     const corePath = fs.existsSync(distCorePath) ? distCorePath : rootCorePath;
     if (fs.existsSync(corePath)) {
-      if (isDevelopment) {
+      if (debug) {
         console.log("Loading fingerprints from:", corePath);
       }
       const content = await fs$1.readFile(corePath, "utf-8");
       const fingerprints = JSON.parse(content);
-      if (isDevelopment) {
+      if (debug) {
         console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from core.json`);
       }
       return fingerprints;
     }
   } catch (error) {
-    if (isDevelopment) {
+    if (debug) {
       console.error("Failed to load core.json:", error);
     }
   }
-  if (isDevelopment) {
+  if (debug) {
     console.error("No fingerprints could be loaded from any source");
   }
   return {};
 }
 
 async function findTech(options) {
-  const { url, headless = true, timeout = 3e4, categories, excludeCategories, onProgress } = options;
+  const { url, headless = true, timeout = 3e4, categories, excludeCategories, debug = false, onProgress } = options;
   onProgress?.({
     current: 1,
     total: 1,
@@ -88,9 +91,13 @@ async function findTech(options) {
     status: "processing"
   });
   try {
-    const fingerprints = await loadFingerprints();
+    const fingerprints = await loadFingerprints(debug);
     if (Object.keys(fingerprints).length === 0) {
       throw new Error("No fingerprints loaded");
+    }
+    if (debug) {
+      console.log("Current working directory:", process.cwd());
+      console.log("Available fingerprints:", Object.keys(fingerprints));
     }
     const browser = await puppeteer__default.launch({ headless });
     const page = await browser.newPage();
@@ -107,6 +114,9 @@ async function findTech(options) {
           if (hasExcludedCategory) continue;
         }
         const detected = await detectTechnology(page, fingerprint);
+        if (debug && detected) {
+          console.log(`Detected ${tech} with categories:`, fingerprint.categories);
+        }
         results.push({
           name: tech,
           categories: fingerprint.categories || ["unidentified"],

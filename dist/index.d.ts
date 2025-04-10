@@ -7,6 +7,7 @@ interface FindTechOptions {
     categories?: string[];
     excludeCategories?: string[];
     customFingerprintsDir?: string;
+    debug?: boolean;
     onProgress?: (progress: {
         current: number;
         total: number;
