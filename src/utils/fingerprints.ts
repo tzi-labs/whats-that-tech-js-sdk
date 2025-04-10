@@ -3,26 +3,75 @@ import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, statSync } from 'fs';
 import fsPromises from 'fs/promises';
+import fetch from 'node-fetch'; // Need fetch for URLs
 
 // Calculate __dirname equivalent for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export async function loadFingerprints(debug = false, customDir?: string): Promise<Record<string, any>> {
+// Helper to check if a string is a URL
+function isUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+export async function loadFingerprints(debug = false, customDir?: string, customFile?: string): Promise<Record<string, any>> {
   // Define potential paths for fingerprints relative to the current __dirname
   // Path for core.json relative to dist/ (used when running built code/packaged)
-  const packagedDistCorePath = resolve(__dirname, 'core.json'); 
+  const packagedDistCorePath = resolve(__dirname, 'core.json');
   // Path for core.json relative to src/utils/ (used for local dev via tsx, points to dist)
-  const devDistCorePath = resolve(__dirname, '../../dist/core.json'); 
+  const devDistCorePath = resolve(__dirname, '../../dist/core.json');
 
   // Add logging for path definitions too
   if (debug) {
-     // console.log(`[Debug Path Def] projectRootCoreJsonPath: ${projectRootCoreJsonPath}`); // Removed
      console.log(`[Debug Path Def] packagedDistCorePath: ${packagedDistCorePath}`);
      console.log(`[Debug Path Def] devDistCorePath: ${devDistCorePath}`);
   }
 
-  // 1. Try custom directory if provided
+  // 1. Try custom file if provided (URL or local path)
+  if (customFile) {
+    if (debug) {
+      console.log(`Attempting to load fingerprints from custom file: ${customFile}`);
+    }
+    try {
+      let content: string;
+      if (isUrl(customFile)) {
+        // Fetch from URL
+        const response = await fetch(customFile);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${customFile}: ${response.statusText}`);
+        }
+        content = await response.text();
+        if (debug) console.log(`Successfully fetched content from URL: ${customFile}`);
+      } else {
+        // Read from local file path
+        const resolvedPath = resolve(process.cwd(), customFile); // Resolve relative to CWD
+        if (!existsSync(resolvedPath)) {
+          throw new Error(`Custom fingerprint file not found at: ${resolvedPath}`);
+        }
+        content = await readFile(resolvedPath, 'utf-8');
+        if (debug) console.log(`Successfully read content from local file: ${resolvedPath}`);
+      }
+
+      const fingerprints = JSON.parse(content);
+      if (debug) {
+         console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from custom file: ${customFile}`);
+      }
+      return fingerprints; // Return immediately if custom file is successfully loaded
+
+    } catch (error) {
+      if (debug) {
+        console.error(`Failed to load fingerprints from custom file ${customFile}:`, error);
+      }
+      // Fall through to other loading methods if custom file fails
+    }
+  }
+
+  // 2. Try custom directory if provided (and custom file didn't load)
   if (customDir && existsSync(customDir)) {
     if (debug) {
       console.log(`Attempting to load fingerprints from custom directory: ${customDir}`);
@@ -81,7 +130,7 @@ export async function loadFingerprints(debug = false, customDir?: string): Promi
       }
   }
   
-  // 2. Try loading dist/core.json (handling both packaged and local dev contexts)
+  // 3. Try loading dist/core.json (handling both packaged and local dev contexts)
   let corePathToTry: string | null = null;
   let loadedFingerprints: Record<string, any> | null = null;
 

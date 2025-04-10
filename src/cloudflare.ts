@@ -1,339 +1,48 @@
-
 /// <reference types="@cloudflare/workers-types" />
 import puppeteer from '@cloudflare/puppeteer';
-import { DetectionResult } from './types/tech-detection';
+import { DetectionResult, Fingerprint } from './types/tech-detection';
 
 interface FindTechOptions {
   url: string;
   timeout?: number;
   categories?: string[];
   excludeCategories?: string[];
+  customFingerprintsFile?: string; // URL for a custom fingerprints JSON file (Cloudflare env)
   onProgress?: (progress: { current: number; total: number; currentUrl: string; status: 'processing' | 'completed' | 'error'; error?: string }) => void;
 }
-
-interface Fingerprint {
-  name: string;
-  categories?: string[];
-  detectors: {
-    htmlContains?: string[];
-    htmlRegex?: string;
-    requestUrlRegex?: string | string[];
-    selectorExists?: string[];
-    globalVariables?: string[];
-    cssCommentRegex?: string;
-  };
+// Helper to check if a string is a URL (needed here too)
+function isUrl(str: string): boolean {
+  try {
+    new URL(str);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
-const FINGERPRINTS: Record<string, Fingerprint> = {
-  "facebook-pixel": {
-    "name": "facebook-pixel",
-    "categories": [
-      "pixel",
-      "marketing"
-    ],
-    "detectors": {
-      "requestUrlRegex": "connect\\.facebook\\.net/.*/fbevents\\.js",
-      "globalVariables": [
-        "fbq"
-      ]
-    }
-  },
-  "framer": {
-    "name": "framer",
-    "detectors": {
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "Framer"
-      },
-      "selectorExists": [
-        "[data-framer-name]",
-        "[data-framer-component-type]",
-        "div[data-framer-page-wrapper]"
-      ],
-      "requestUrlRegex": [
-        "events\\.framer\\.com/script"
-      ]
-    }
-  },
-  "google-analytics": {
-    "name": "google-analytics",
-    "categories": [
-      "pixel",
-      "analytics"
-    ],
-    "detectors": {
-      "globalVariables": [
-        "gtag",
-        "ga",
-        "GoogleAnalyticsObject",
-        "__gaTracker"
-      ],
-      "requestUrlRegex": [
-        "google-analytics\\.com/analytics\\.js",
-        "googletagmanager\\.com/gtag/js",
-        "google-analytics\\.com/collect",
-        "analytics\\.google\\.com"
-      ]
-    }
-  },
-  "google-tag-manager": {
-    "name": "google-tag-manager",
-    "detectors": {
-      "globalVariables": [
-        "dataLayer",
-        "google_tag_manager"
-      ],
-      "requestUrlRegex": [
-        "googletagmanager\\.com/gtm\\.js",
-        "googletagmanager\\.com/ns\\.html"
-      ]
-    }
-  },
-  "gtag": {
-    "name": "gtag",
-    "detectors": {
-      "globalVariables": [
-        "gtag"
-      ],
-      "requestUrlRegex": [
-        "googletagmanager\\.com/gtag/js",
-        "google-analytics\\.com/g/collect"
-      ]
-    }
-  },
-  "hotjar": {
-    "name": "hotjar",
-    "detectors": {
-      "globalVariables": [
-        "hj",
-        "hjSiteSettings",
-        "_hjSettings"
-      ],
-      "requestUrlRegex": [
-        "static\\.hotjar\\.com/c/hotjar-",
-        "vars\\.hotjar\\.com",
-        "script\\.hotjar\\.com",
-        "in\\.hotjar\\.com/api/v2/client/sites"
-      ]
-    }
-  },
-  "klaviyo": {
-    "name": "klaviyo",
-    "detectors": {
-      "globalVariables": [
-        "_learnq",
-        "Klaviyo"
-      ],
-      "requestUrlRegex": [
-        "a\\.klaviyo\\.com/media/js/analytics/analytics\\.js",
-        "static\\.klaviyo\\.com/onsite/js/klaviyo\\.js",
-        "static\\.klaviyo\\.com/onsite/js/klaviyo\\.min\\.js",
-        "a\\.klaviyo\\.com/api/identify",
-        "a\\.klaviyo\\.com/api/track"
-      ]
-    }
-  },
-  "next": {
-    "name": "next",
-    "detectors": {
-      "globalVariables": [
-        "next"
-      ],
-      "htmlRegex": "(data-next-page|data-next-url|__NEXT_DATA__|__next)"
-    }
-  },
-  "nuxt": {
-    "name": "nuxt",
-    "detectors": {
-      "globalVariables": [
-        "__NUXT__",
-        "$nuxt"
-      ],
-      "selectorExists": [
-        "#__nuxt",
-        "#__layout",
-        "[data-n-head]",
-        "[data-n-]"
-      ]
-    }
-  },
-  "react": {
-    "name": "react",
-    "categories": [
-      "framework",
-      "frontend"
-    ],
-    "detectors": {
-      "globalVariables": [
-        "React",
-        "__REACT_DEVTOOLS_GLOBAL_HOOK__"
-      ],
-      "selectorExists": [
-        "div[data-reactroot]",
-        "[data-reactid]",
-        "noscript[data-reactroot]",
-        "#react-root"
-      ]
-    }
-  },
-  "segment": {
-    "name": "segment",
-    "detectors": {
-      "globalVariables": [
-        "analytics",
-        "analytics.initialize",
-        "analytics.invoked"
-      ],
-      "selectorExists": [
-        "script[src*='cdn.segment.com/analytics.js']",
-        "script[src*='cdn.segment.com/analytics.min.js']"
-      ]
-    }
-  },
-  "shopify": {
-    "name": "shopify",
-    "categories": [
-      "cms",
-      "ecommerce"
-    ],
-    "detectors": {
-      "metaTagCheck": {
-        "name": "shopify-checkout-api-token",
-        "contentRegex": ".*"
-      },
-      "globalVariables": [
-        "Shopify",
-        "ShopifyAnalytics"
-      ]
-    }
-  },
-  "squarespace": {
-    "name": "squarespace",
-    "detectors": {
-      "globalVariables": [
-        "Squarespace"
-      ],
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "Squarespace"
-      }
-    },
-    "themeDetection": {
-      "method": "global",
-      "globalPath": "Static.SQUARESPACE_CONTEXT.templateName"
-    }
-  },
-  "statamic": {
-    "name": "statamic",
-    "detectors": {
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "Statamic"
-      },
-      "globalVariables": [
-        "Statamic"
-      ],
-      "selectorExists": [
-        "[data-statamic]",
-        "[data-statamic-field]",
-        "[data-statamic-handler]"
-      ]
-    },
-    "themeDetection": {
-      "cssLinkRegex": "/themes/([\\w-]+)/"
-    }
-  },
-  "svelte": {
-    "name": "svelte",
-    "detectors": {
-      "globalVariables": [
-        "__sveltekit",
-        "__SVELTEKIT_DEV__"
-      ],
-      "selectorExists": [
-        "[data-sveltekit]",
-        "[data-sveltekit-preload-data]",
-        "[data-sveltekit-reload]"
-      ]
-    }
-  },
-  "vue": {
-    "name": "vue",
-    "detectors": {
-      "globalVariables": [
-        "Vue",
-        "__VUE_DEVTOOLS_GLOBAL_HOOK__",
-        "VueRouter"
-      ],
-      "selectorExists": [
-        "[data-v-]",
-        "#app[data-v-app]",
-        "[data-server-rendered='true']"
-      ]
-    }
-  },
-  "webflow": {
-    "name": "webflow",
-    "detectors": {
-      "globalVariables": [
-        "Webflow"
-      ],
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "Webflow"
-      },
-      "selectorExists": [
-        ".w-webflow-badge"
-      ]
-    },
-    "themeDetection": {
-      "cssLinkRegex": "css/([\\w-]+)\\.webflow\\.css"
-    }
-  },
-  "wix": {
-    "name": "wix",
-    "detectors": {
-      "globalVariables": [
-        "wixBiSession",
-        "wixSdk"
-      ],
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "Wix\\.com"
-      },
-      "selectorExists": [
-        "div[class*='wixui-']"
-      ]
-    }
-  },
-  "wordpress": {
-    "name": "wordpress",
-    "detectors": {
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "WordPress"
-      },
-      "selectorExists": [
-        "script[src*='wp-includes']",
-        "body.wp-",
-        "#wpadminbar"
-      ],
-      "globalVariables": [
-        "wp",
-        "wpApiSettings",
-        "wc"
-      ],
-      "themeDetection": {
-        "stylesheetRegex": "wp-content\\/themes\\/([-\\w]+)",
-        "bodyClassRegex": "theme-([-\\w]+)",
-        "cssIdentifierRegex": "Theme Name:\\s*([^\\n]+)"
-      }
-    }
+// Fetch custom fingerprints if a URL is provided
+async function fetchCustomFingerprints(url: string): Promise<Record<string, Fingerprint> | null> {
+  if (!isUrl(url)) {
+    console.error(`Custom fingerprints file must be a valid URL in Cloudflare environment: ${url}`);
+    return null;
   }
-};
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Failed to fetch custom fingerprints from ${url}: ${response.statusText}`);
+      return null;
+    }
+    const data = await response.json();
+    console.log(`Successfully loaded ${Object.keys(data as Record<string, any>).length} custom fingerprints from ${url}`);
+    return data as Record<string, Fingerprint>;
+  } catch (error) {
+    console.error(`Error fetching or parsing custom fingerprints from ${url}:`, error);
+    return null;
+  }
+}
 
 export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }): Promise<DetectionResult[]> {
-  const { url, timeout = 30000, categories, excludeCategories, onProgress } = options;
+  const { url, timeout = 30000, categories, excludeCategories, customFingerprintsFile, onProgress } = options;
   
   onProgress?.({
     current: 1,
@@ -342,13 +51,28 @@ export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }
     status: 'processing'
   });
 
+  let activeFingerprints = {}; // Default to hardcoded
+
+  // Attempt to load custom fingerprints if specified
+  if (customFingerprintsFile) {
+    console.log(`Attempting to load custom fingerprints from file/URL: ${customFingerprintsFile}`);
+    const customFingerprints = await fetchCustomFingerprints(customFingerprintsFile);
+    if (customFingerprints) {
+      activeFingerprints = customFingerprints; // Override with custom ones
+    }
+  }
+
+  if (Object.keys(activeFingerprints).length === 0) {
+    throw new Error('No fingerprints available (default or custom).');
+  }
+
   try {
     const browser = await puppeteer.launch(env.MYBROWSER);
     const page = await browser.newPage();
     
     try {
       await page.goto(url, { waitUntil: 'networkidle0', timeout });
-      const results = await processSingleUrl(page, categories, excludeCategories);
+      const results = await processSingleUrl(page, activeFingerprints, categories, excludeCategories);
       
       onProgress?.({
         current: 1,
@@ -375,13 +99,14 @@ export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }
 
 async function processSingleUrl(
   page: any,
+  fingerprintsToUse: Record<string, Fingerprint>, // Pass the active fingerprints
   categories?: string[],
   excludeCategories?: string[]
 ): Promise<DetectionResult[]> {
   const results: DetectionResult[] = [];
   
   // Process all fingerprints
-  for (const [tech, fingerprint] of Object.entries(FINGERPRINTS)) {
+  for (const [tech, fingerprint] of Object.entries(fingerprintsToUse)) { // Use passed fingerprints
     // Skip if categories are specified and this fingerprint doesn't match
     if (categories && fingerprint.categories) {
       const hasMatchingCategory = fingerprint.categories.some((cat: string) => categories.includes(cat));

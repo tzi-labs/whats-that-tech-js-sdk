@@ -9,12 +9,13 @@ interface FindTechOptions {
   categories?: string[];         // Specific categories to detect
   excludeCategories?: string[];  // Categories to exclude from detection
   customFingerprintsDir?: string; // Directory for custom fingerprints
+  customFingerprintsFile?: string; // File path or URL for a custom fingerprints JSON file
   debug?: boolean;               // Enable debug logging
   onProgress?: (progress: { current: number; total: number; currentUrl: string; status: 'processing' | 'completed' | 'error'; error?: string }) => void;
 }
 
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
-  const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, debug = false, onProgress } = options;
+  const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, customFingerprintsFile, debug = false, onProgress } = options;
   
   onProgress?.({
     current: 1,
@@ -26,15 +27,17 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
   try {
     // Add preliminary debug logging for fingerprint source
     if (debug) {
-      if (customFingerprintsDir) {
+      if (customFingerprintsFile) {
+        console.log(`Debug: Attempting to load fingerprints from custom file: ${customFingerprintsFile}`);
+      } else if (customFingerprintsDir) {
         console.log(`Debug: Attempting to load fingerprints from custom directory specified: ${customFingerprintsDir}`);
       } else {
-        console.log('Debug: No custom fingerprint directory specified. Using default path resolution (Dev -> Node Modules -> Dist -> Root).');
+        console.log('Debug: No custom fingerprint source specified. Using default path resolution.');
       }
     }
     
-    // Load fingerprints, passing the custom dir option
-    const fingerprints = await loadFingerprints(debug, customFingerprintsDir);
+    // Load fingerprints, passing the custom dir and file options
+    const fingerprints = await loadFingerprints(debug, customFingerprintsDir, customFingerprintsFile);
     if (Object.keys(fingerprints).length === 0) {
       throw new Error('No fingerprints loaded');
     }

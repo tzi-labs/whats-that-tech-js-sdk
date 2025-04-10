@@ -139,6 +139,7 @@ const handler: Handler = {
           const data = await findTech({
             url,
             timeout: 30000,
+            customFingerprintsFile: 'https://raw.githubusercontent.com/tzi-labs/whats-that-tech-js-sdk/refs/heads/main/dist/core.json',
             showDetectedDetails
           }, env);
           
