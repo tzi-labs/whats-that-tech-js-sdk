@@ -3,6 +3,10 @@
 The first open-sourced, crowd-sourced logic for detecting most of the web technologies powering the internet today.
 Designed for transparency, speed, and community-driven contributions — this framework identifies frameworks, CMSs, analytics, and more using simple, readable rules anyone can extend.
 
+## Quick and Dirty Test with Cloudflare Pages + Browser Rendering Function
+[![Deploy to Cloudflare Pages](https://deploy.cloudflare.com/button.svg)](https://deploy.cloudflare.com/?url=https://github.com/tzi-labs/whats-that-tech-js-sdk&projectPath=examples/cloudflare-pages)
+
+
 ## Features
 
 - 🎯 Multiple detection methods (global variables, selectors, network requests, etc.)

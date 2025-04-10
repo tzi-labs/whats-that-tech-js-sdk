@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whats That Tech - Cloudflare Worker Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        #container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        textarea {
+            width: 95%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #results {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap; /* Allows wrapping and preserves line breaks */
+            word-wrap: break-word; /* Breaks long words */
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .event-line {
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #ccc;
+        }
+        .event-line:last-child {
+            border-bottom: none;
+        }
+        .tech-name {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .url-processing {
+            color: #17a2b8;
+        }
+        .url-completed {
+            color: #007bff;
+        }
+        .url-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .general-error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Test Cloudflare Worker SSE</h1>
+        <p>Enter URLs (one per line, max 8):</p>
+        <textarea id="urlsInput" placeholder="https://example.com
+https://github.com"></textarea>
+        <br>
+        <button id="detectButton">Detect Technologies</button>
+
+        <h2>Live Results:</h2>
+        <pre id="results">Waiting for detection to start...</pre>
+    </div>
+
+    <script>
+        const urlsInput = document.getElementById('urlsInput');
+        const detectButton = document.getElementById('detectButton');
+        const resultsOutput = document.getElementById('results');
+        let eventSource = null;
+
+        detectButton.addEventListener('click', () => {
+            const urls = urlsInput.value.trim().split('\n').map(u => u.trim()).filter(u => u);
+
+            if (urls.length === 0) {
+                resultsOutput.textContent = 'Please enter at least one URL.';
+                return;
+            }
+            if (urls.length > 8) {
+                resultsOutput.textContent = 'Maximum of 8 URLs allowed for POST requests.';
+                return;
+            }
+
+            // Assuming the worker is deployed at the root of the same domain
+            const workerUrl = '/api/cloudflare-worker'; 
+            // Or specify the full URL if different: const workerUrl = 'YOUR_WORKER_DEPLOYMENT_URL';
+
+            // Clear previous results and disable button
+            resultsOutput.innerHTML = '';
+            detectButton.disabled = true;
+            detectButton.textContent = 'Detecting...';
+
+            // Close existing connection if any
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            resultsOutput.textContent = 'Connecting to worker...';
+
+            // Create a new EventSource connection using POST
+            // Note: EventSource standardly only supports GET. This is a common workaround 
+            // pattern, but strictly speaking, it's not pure SSE standard.
+            // Alternatively, the worker could be adapted to take URLs via GET params for SSE.
+            // For this example, we stick to the POST approach we built.
+            
+            // Since EventSource doesn't natively support POST, we'll use fetch to *initiate* 
+            // the connection and process the stream manually. 
+            fetch(workerUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream' // Crucial for triggering SSE on the worker
+                },
+                body: JSON.stringify({ urls: urls })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                if (!response.body) {
+                    throw new Error('Response body is null');
+                }
+                resultsOutput.textContent = 'Connected. Receiving data...\n\n'; // Initial message
+                return response.body.getReader();
+            })
+            .then(reader => {
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                function processStream() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            resultsOutput.innerHTML += '<div class="event-line"><strong>Stream finished.</strong></div>';
+                            detectButton.disabled = false;
+                            detectButton.textContent = 'Detect Technologies';
+                            return;
+                        }
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const messages = buffer.split('\n\n');
+                        buffer = messages.pop() || ''; // Keep partial message
+
+                        messages.forEach(msg => {
+                            if (msg.startsWith('data:')) {
+                                try {
+                                    const jsonData = msg.substring(5).trim();
+                                    const event = JSON.parse(jsonData);
+                                    displayEvent(event);
+                                } catch (e) {
+                                    console.error('Error parsing SSE data:', e, 'Raw:', msg);
+                                    const line = document.createElement('div');
+                                    line.className = 'event-line general-error';
+                                    line.textContent = `Parse Error: ${e.message} (Data: ${msg.substring(0, 100)}...)`;
+                                    resultsOutput.appendChild(line);
+                                }
+                            }
+                        });
+                        // Scroll to bottom
+                        resultsOutput.scrollTop = resultsOutput.scrollHeight;
+                        // Continue reading
+                        processStream();
+                    }).catch(error => {
+                        console.error('Stream reading error:', error);
+                        resultsOutput.innerHTML += `<div class="event-line general-error">Stream Error: ${error.message}</div>`;
+                        detectButton.disabled = false;
+                        detectButton.textContent = 'Detect Technologies';
+                    });
+                }
+                processStream(); // Start reading the stream
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                resultsOutput.textContent = `Error connecting: ${error.message}`;
+                detectButton.disabled = false;
+                detectButton.textContent = 'Detect Technologies';
+            });
+        });
+
+        function displayEvent(event) {
+            const line = document.createElement('div');
+            line.className = 'event-line';
+            let content = '';
+
+            switch (event.type) {
+                case 'url_processing':
+                    content = `<span class="url-processing">Processing: ${escapeHtml(event.url)}</span>`;
+                    break;
+                case 'tech_detected':
+                    content = `&nbsp;&nbsp; Detected on ${escapeHtml(event.url)}: <span class="tech-name">${escapeHtml(event.tech.name)}</span> (${escapeHtml(event.tech.categories.join(', '))})`;
+                    break;
+                case 'url_completed':
+                    content = `<span class="url-completed">Completed: ${escapeHtml(event.url)}</span>`;
+                    break;
+                case 'url_error':
+                    content = `<span class="url-error">Error on ${escapeHtml(event.url)}: ${escapeHtml(event.error)}</span>`;
+                    break;
+                default:
+                    content = `Unknown event: ${JSON.stringify(event)}`;
+            }
+            line.innerHTML = content;
+            resultsOutput.appendChild(line);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+    </script>
+</body>
+</html>

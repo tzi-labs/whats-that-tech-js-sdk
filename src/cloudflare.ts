@@ -48,7 +48,8 @@ async function fetchCustomFingerprints(url: string): Promise<Record<string, Fing
   }
 }
 
-export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }): Promise<void> { // Return void as results are streamed
+// Revert: env is required, launch always uses env.MYBROWSER
+export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }): Promise<void> { 
   const { url, timeout = 30000, categories, excludeCategories, customFingerprintsFile, onProgress, onTechDetected } = options;
   
   onProgress?.({
@@ -74,7 +75,8 @@ export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }
   }
 
   try {
-    const browser = await puppeteer.launch(env.MYBROWSER);
+    // Revert: Always launch with env.MYBROWSER
+    const browser = await puppeteer.launch(env.MYBROWSER); 
     const page = await browser.newPage();
     
     try {
@@ -111,7 +113,7 @@ async function processSingleUrl(
   categories?: string[],
   excludeCategories?: string[],
   onTechDetected?: (result: DetectedTechInfo) => void // Accept the callback
-): Promise<void> { // Return void
+): Promise<void> {
   // No need to collect results here anymore
   // const results: DetectionResult[] = []; 
   

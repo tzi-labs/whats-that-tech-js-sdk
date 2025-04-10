@@ -1,0 +1,17 @@
+{
+	"name": "whats-that-tech-cloudflare-worker",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler pages dev ./public",
+		"deploy": "wrangler pages deploy ./public --project-name=whats-that-tech"
+	},
+	"dependencies": {
+		"whats-that-tech-js-sdk": "github:tzi-labs/whats-that-tech-js-sdk"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250402.0",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.2"
+	}
+}
