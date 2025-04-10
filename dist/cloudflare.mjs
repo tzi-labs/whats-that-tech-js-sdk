@@ -14684,7 +14684,7 @@ async function fetchCustomFingerprints(url) {
   }
 }
 async function findTech(options, env) {
-  const { url, timeout = 3e4, categories, excludeCategories, customFingerprintsFile, onProgress } = options;
+  const { url, timeout = 3e4, categories, excludeCategories, customFingerprintsFile, onProgress, onTechDetected } = options;
   onProgress?.({
     current: 1,
     total: 1,
@@ -14707,14 +14707,13 @@ async function findTech(options, env) {
     const page = await browser.newPage();
     try {
       await page.goto(url, { waitUntil: "networkidle0", timeout });
-      const results = await processSingleUrl(page, activeFingerprints, categories, excludeCategories);
+      await processSingleUrl(page, activeFingerprints, categories, excludeCategories, onTechDetected);
       onProgress?.({
         current: 1,
         total: 1,
         currentUrl: url,
         status: "completed"
       });
-      return results;
     } finally {
       await browser.close();
     }
@@ -14729,8 +14728,7 @@ async function findTech(options, env) {
     throw error;
   }
 }
-async function processSingleUrl(page, fingerprintsToUse, categories, excludeCategories) {
-  const results = [];
+async function processSingleUrl(page, fingerprintsToUse, categories, excludeCategories, onTechDetected) {
   for (const [tech, fingerprint] of Object.entries(fingerprintsToUse)) {
     if (categories && fingerprint.categories) {
       const hasMatchingCategory = fingerprint.categories.some((cat) => categories.includes(cat));
@@ -14741,13 +14739,13 @@ async function processSingleUrl(page, fingerprintsToUse, categories, excludeCate
       if (hasExcludedCategory) continue;
     }
     const detected = await detectTechnology(page, fingerprint);
-    results.push({
-      name: tech,
-      categories: fingerprint.categories || ["unidentified"],
-      detected
-    });
+    if (detected) {
+      onTechDetected?.({
+        name: tech,
+        categories: fingerprint.categories || ["unidentified"]
+      });
+    }
   }
-  return results;
 }
 async function detectTechnology(page, fingerprint) {
   const { detectors } = fingerprint;

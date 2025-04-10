@@ -1,5 +1,7 @@
-import { D as DetectionResult } from './shared/whats-that-tech-js-sdk.BUj4cK2I.js';
-
+interface DetectedTechInfo {
+    name: string;
+    categories: string[];
+}
 interface FindTechOptions {
     url: string;
     timeout?: number;
@@ -13,9 +15,11 @@ interface FindTechOptions {
         status: 'processing' | 'completed' | 'error';
         error?: string;
     }) => void;
+    onTechDetected?: (result: DetectedTechInfo) => void;
 }
 declare function findTech(options: FindTechOptions, env: {
     MYBROWSER: any;
-}): Promise<DetectionResult[]>;
+}): Promise<void>;
 
 export { findTech };
+export type { DetectedTechInfo };
