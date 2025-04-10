@@ -82,6 +82,7 @@ pnpm tsx examples/chunking-batch-crawl.ts
 - `categories` (string[], optional): Specific categories to detect
 - `excludeCategories` (string[], optional): Categories to exclude from detection
 - `customFingerprintsDir` (string, optional): Directory for custom fingerprints
+- `debug` (boolean, optional): Enable debug logging to see fingerprint loading and detection details
 - `onProgress` (function, optional): Callback for progress updates
 
 #### Progress Updates
@@ -101,6 +102,47 @@ Returns a promise that resolves to an array of `DetectionResult` objects, each c
 - `name` (string): Name of the detected technology
 - `categories` (string[]): Categories the technology belongs to
 - `detected` (boolean): Whether the technology was detected
+
+### Debug Mode
+
+When debug mode is enabled (`debug: true`), the SDK will output detailed information about:
+
+```typescript
+const results = await findTech({
+  url: 'https://example.com',
+  debug: true // Enable debug logging
+});
+```
+
+Debug output includes:
+- Current working directory
+- Fingerprint search paths (local core, node_modules, dist)
+- Successfully loaded fingerprints
+- Technologies detected during scanning
+
+Example debug output:
+```bash
+Current working directory: /your/project
+Looking for fingerprints in:
+- Local core: /your/project/core
+- Node modules: /your/project/node_modules/whats-that-tech-core
+- Dist core: /your/project/dist/core.json
+- Root core: /your/project/core.json
+
+Loading fingerprints from: /your/project/node_modules/whats-that-tech-core
+Loaded fingerprint for wordpress
+Loaded fingerprint for shopify
+...
+
+Detected wordpress with categories: ["cms"]
+Detected shopify with categories: ["ecommerce"]
+```
+
+This is particularly useful when:
+- Developing new fingerprints
+- Debugging detection issues
+- Understanding where fingerprints are being loaded from
+- Verifying which technologies are being detected
 
 ## Fingerprints
 

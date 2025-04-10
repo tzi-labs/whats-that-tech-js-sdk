@@ -9,11 +9,12 @@ interface FindTechOptions {
   categories?: string[];         // Specific categories to detect
   excludeCategories?: string[];  // Categories to exclude from detection
   customFingerprintsDir?: string; // Directory for custom fingerprints
+  debug?: boolean;               // Enable debug logging
   onProgress?: (progress: { current: number; total: number; currentUrl: string; status: 'processing' | 'completed' | 'error'; error?: string }) => void;
 }
 
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
-  const { url, headless = true, timeout = 30000, categories, excludeCategories, onProgress } = options;
+  const { url, headless = true, timeout = 30000, categories, excludeCategories, debug = false, onProgress } = options;
   
   onProgress?.({
     current: 1,
@@ -24,9 +25,14 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
 
   try {
     // Load fingerprints
-    const fingerprints = await loadFingerprints();
+    const fingerprints = await loadFingerprints(debug);
     if (Object.keys(fingerprints).length === 0) {
       throw new Error('No fingerprints loaded');
+    }
+
+    if (debug) {
+      console.log('Current working directory:', process.cwd());
+      console.log('Available fingerprints:', Object.keys(fingerprints));
     }
 
     const browser = await puppeteer.launch({ headless });
@@ -52,6 +58,10 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
         }
         
         const detected = await detectTechnology(page, fingerprint);
+        
+        if (debug && detected) {
+          console.log(`Detected ${tech} with categories:`, fingerprint.categories);
+        }
         
         results.push({
           name: tech,
