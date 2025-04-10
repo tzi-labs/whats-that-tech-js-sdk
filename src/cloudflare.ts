@@ -2,6 +2,12 @@
 import puppeteer from '@cloudflare/puppeteer';
 import { DetectionResult, Fingerprint } from './types/tech-detection';
 
+// Represents info about a single detected tech
+export interface DetectedTechInfo {
+  name: string;
+  categories: string[];
+}
+
 interface FindTechOptions {
   url: string;
   timeout?: number;
@@ -9,6 +15,7 @@ interface FindTechOptions {
   excludeCategories?: string[];
   customFingerprintsFile?: string; // URL for a custom fingerprints JSON file (Cloudflare env)
   onProgress?: (progress: { current: number; total: number; currentUrl: string; status: 'processing' | 'completed' | 'error'; error?: string }) => void;
+  onTechDetected?: (result: DetectedTechInfo) => void; // Callback for individual tech detection
 }
 // Helper to check if a string is a URL (needed here too)
 function isUrl(str: string): boolean {
@@ -41,8 +48,8 @@ async function fetchCustomFingerprints(url: string): Promise<Record<string, Fing
   }
 }
 
-export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }): Promise<DetectionResult[]> {
-  const { url, timeout = 30000, categories, excludeCategories, customFingerprintsFile, onProgress } = options;
+export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }): Promise<void> { // Return void as results are streamed
+  const { url, timeout = 30000, categories, excludeCategories, customFingerprintsFile, onProgress, onTechDetected } = options;
   
   onProgress?.({
     current: 1,
@@ -72,7 +79,8 @@ export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }
     
     try {
       await page.goto(url, { waitUntil: 'networkidle0', timeout });
-      const results = await processSingleUrl(page, activeFingerprints, categories, excludeCategories);
+      // Pass the onTechDetected callback down
+      await processSingleUrl(page, activeFingerprints, categories, excludeCategories, onTechDetected);
       
       onProgress?.({
         current: 1,
@@ -81,7 +89,7 @@ export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }
         status: 'completed'
       });
       
-      return results;
+      // No return value needed as results are streamed via callbacks
     } finally {
       await browser.close();
     }
@@ -99,11 +107,13 @@ export async function findTech(options: FindTechOptions, env: { MYBROWSER: any }
 
 async function processSingleUrl(
   page: any,
-  fingerprintsToUse: Record<string, Fingerprint>, // Pass the active fingerprints
+  fingerprintsToUse: Record<string, Fingerprint>,
   categories?: string[],
-  excludeCategories?: string[]
-): Promise<DetectionResult[]> {
-  const results: DetectionResult[] = [];
+  excludeCategories?: string[],
+  onTechDetected?: (result: DetectedTechInfo) => void // Accept the callback
+): Promise<void> { // Return void
+  // No need to collect results here anymore
+  // const results: DetectionResult[] = []; 
   
   // Process all fingerprints
   for (const [tech, fingerprint] of Object.entries(fingerprintsToUse)) { // Use passed fingerprints
@@ -121,14 +131,26 @@ async function processSingleUrl(
     
     const detected = await detectTechnology(page, fingerprint);
     
+    // If detected, call the callback immediately
+    if (detected) {
+      onTechDetected?.({
+        name: tech,
+        categories: fingerprint.categories || ['unidentified'],
+      });
+    }
+
+    // Remove result collection
+    /*
     results.push({
       name: tech,
       categories: fingerprint.categories || ['unidentified'],
       detected
     });
+    */
   }
   
-  return results;
+  // No return needed
+  // return results;
 }
 
 async function detectTechnology(page: any, fingerprint: Fingerprint): Promise<boolean> {

@@ -1,5 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { findTech } from '../../src/cloudflare';
+// Import the necessary type from the core module
+import type { DetectedTechInfo } from '../../src/cloudflare';
 
 // Define the environment interface for Cloudflare Workers
 interface Env {
@@ -19,6 +21,13 @@ interface BatchResponse {
     error?: string;
   }[];
 }
+
+// Define the structure for different SSE Event types
+type SSEEvent =
+  | { type: 'url_processing'; url: string }
+  | { type: 'tech_detected'; url: string; tech: DetectedTechInfo }
+  | { type: 'url_completed'; url: string }
+  | { type: 'url_error'; url: string; error: string };
 
 // Define the handler type for Cloudflare Workers
 interface Handler {
@@ -53,6 +62,10 @@ const handler: Handler = {
           },
         });
       }
+
+      // Check if client accepts SSE
+      const acceptHeader = request.headers.get('Accept');
+      const wantsSSE = acceptHeader && acceptHeader.includes('text/event-stream');
 
       // Process URLs based on request method
       let urls: string[] = [];
@@ -132,36 +145,93 @@ const handler: Handler = {
         });
       }
 
-      // Process URLs
-      const results = await Promise.all(urls.map(async (url) => {
-        try {
-          console.log('Processing URL:', url);
-          const data = await findTech({
-            url,
-            timeout: 30000,
-            customFingerprintsFile: 'https://raw.githubusercontent.com/tzi-labs/whats-that-tech-js-sdk/refs/heads/main/dist/core.json',
-            showDetectedDetails
-          }, env);
-          
-          return {
-            url,
-            data
-          };
-        } catch (error) {
-          return {
-            url,
-            error: error instanceof Error ? error.message : 'Unknown error occurred'
-          };
-        }
-      }));
+      // If SSE is requested, handle streaming
+      if (wantsSSE) {
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        const encoder = new TextEncoder();
 
-      // Return results as JSON
-      return new Response(JSON.stringify({ results }, null, 2), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
+        // Updated function to write typed SSE events
+        const writeSSE = (event: SSEEvent) => {
+          writer.write(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        };
+
+        // Process URLs sequentially and stream results
+        (async () => {
+          for (const url of urls) {
+            writeSSE({ type: 'url_processing', url });
+            try {
+              // Define the callback for detected technologies
+              const handleTechDetection = (techInfo: DetectedTechInfo) => {
+                writeSSE({ type: 'tech_detected', url, tech: techInfo });
+              };
+
+              // Call findTech, passing the callback. No return value expected.
+              await findTech({
+                url,
+                timeout: 30000,
+                customFingerprintsFile: 'https://raw.githubusercontent.com/tzi-labs/whats-that-tech-js-sdk/refs/heads/main/dist/core.json',
+                onTechDetected: handleTechDetection // Pass the callback
+              }, env);
+
+              // Signal completion for this URL
+              writeSSE({ type: 'url_completed', url });
+            } catch (error) {
+              console.error(`Error processing ${url}:`, error);
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+              // Signal error for this URL
+              writeSSE({ type: 'url_error', url, error: errorMessage });
+            }
+          }
+          // Close the stream when done
+          await writer.close();
+        })(); // IIFE to run the async processing
+
+        // Return the streaming response
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*' // Adjust CORS as needed
+          }
+        });
+
+      } else {
+        // Existing logic for batch JSON response
+        const results = await Promise.all(urls.map(async (url) => {
+          try {
+            // NOTE: The batch response part now won't get individual tech data
+            // because findTech returns void. It will only signal success/failure per URL.
+            // Consider removing or adapting this non-SSE path if fine-grained data is always needed.
+            console.log('Processing URL:', url);
+            await findTech({
+              url,
+              timeout: 30000,
+              customFingerprintsFile: 'https://raw.githubusercontent.com/tzi-labs/whats-that-tech-js-sdk/refs/heads/main/dist/core.json'
+            }, env);
+            
+            // Since findTech is void, we just return success marker
+            return {
+              url,
+              data: { status: 'Processed (check SSE for details if requested)' }
+            };
+          } catch (error) {
+            return {
+              url,
+              error: error instanceof Error ? error.message : 'Unknown error occurred'
+            };
+          }
+        }));
+
+        // Return results as JSON
+        return new Response(JSON.stringify({ results }, null, 2), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
     } catch (error) {
       console.error('Error in worker:', error);
       return new Response(JSON.stringify({ 
