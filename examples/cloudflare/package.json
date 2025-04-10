@@ -3,10 +3,10 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"build": "tsc cloudflare-worker.ts --outDir dist"
+		"build": "tsx cloudflare-worker.ts --outDir dist"
 	},
 	"dependencies": {
-		"whats-that-tech-core": "github:tzi-labs/whats-that-tech-core"
+		"whats-that-tech-js-sdk": "github:tzi-labs/whats-that-tech-js-sdk"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250402.0",

@@ -59,11 +59,9 @@ export default defineBuildConfig({
       
       // Write combined JSON file to both dist and root
       const outputPath = join(distPath, 'core.json')
-      const rootOutputPath = join(process.cwd(), 'core.json')
       const jsonContent = JSON.stringify(combinedData, null, 2)
       
       writeFileSync(outputPath, jsonContent)
-      writeFileSync(rootOutputPath, jsonContent)
     }
   }
 })

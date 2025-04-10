@@ -58,6 +58,14 @@ export interface Fingerprint {
   name: string;
   categories?: string[];
   detectors: FingerprintDetectors;
+  themeDetection?: {
+    method?: string;
+    globalPath?: string;
+    cssLinkRegex?: string;
+    stylesheetRegex?: string;
+    bodyClassRegex?: string;
+    cssIdentifierRegex?: string;
+  };
 }
 
 // Window interface extensions for framework detection

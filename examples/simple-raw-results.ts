@@ -1,5 +1,5 @@
-import { findTech } from '../src/index';
-
+// import { findTech } from '../src/index';
+import { findTech } from '../dist/index.cjs';
 async function main() {
   try {
     // Debug fingerprints loading
