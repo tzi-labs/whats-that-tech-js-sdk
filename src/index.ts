@@ -14,7 +14,7 @@ interface FindTechOptions {
 }
 
 export async function findTech(options: FindTechOptions): Promise<DetectionResult[]> {
-  const { url, headless = true, timeout = 30000, categories, excludeCategories, debug = false, onProgress } = options;
+  const { url, headless = true, timeout = 30000, categories, excludeCategories, customFingerprintsDir, debug = false, onProgress } = options;
   
   onProgress?.({
     current: 1,
@@ -24,8 +24,17 @@ export async function findTech(options: FindTechOptions): Promise<DetectionResul
   });
 
   try {
-    // Load fingerprints
-    const fingerprints = await loadFingerprints(debug);
+    // Add preliminary debug logging for fingerprint source
+    if (debug) {
+      if (customFingerprintsDir) {
+        console.log(`Debug: Attempting to load fingerprints from custom directory specified: ${customFingerprintsDir}`);
+      } else {
+        console.log('Debug: No custom fingerprint directory specified. Using default path resolution (Dev -> Node Modules -> Dist -> Root).');
+      }
+    }
+    
+    // Load fingerprints, passing the custom dir option
+    const fingerprints = await loadFingerprints(debug, customFingerprintsDir);
     if (Object.keys(fingerprints).length === 0) {
       throw new Error('No fingerprints loaded');
     }
@@ -124,7 +133,7 @@ async function detectTechnology(page: Page, fingerprint: any): Promise<boolean> 
       : [detectors.requestUrlRegex];
     
     if (requests.some((url: string) => 
-      regexes.some(regex => new RegExp(regex).test(url))
+      regexes.some((regex: string) => new RegExp(regex).test(url))
     )) {
       return true;
     }

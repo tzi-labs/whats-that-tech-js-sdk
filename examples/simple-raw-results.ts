@@ -8,6 +8,7 @@ async function main() {
     const results = await findTech({
       url: 'https://wordpress.com',
       timeout: 6000, // 6 second timeout
+      debug: true,
       onProgress: (progress) => {
         console.log('Progress:', progress);
       }
