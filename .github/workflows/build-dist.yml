@@ -11,7 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,7 +40,15 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Commit and push if changed
+      - name: Commit and push if dist/ changed
         run: |
           git add -f dist/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update dist files [skip ci]" && git push) 
+          git restore pnpm-lock.yaml  # prevent accidental commit of unrelated changes
+
+          if ! git diff --quiet || ! git diff --staged --quiet; then
+            echo "🚀 Changes detected in dist/. Committing..."
+            git commit -m "chore: update dist files [skip ci]"
+            git push
+          else
+            echo "✅ No changes to dist/ — skipping commit"
+          fi
