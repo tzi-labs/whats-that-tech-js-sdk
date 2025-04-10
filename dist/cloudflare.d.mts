@@ -5,6 +5,7 @@ interface FindTechOptions {
     timeout?: number;
     categories?: string[];
     excludeCategories?: string[];
+    customFingerprintsFile?: string;
     onProgress?: (progress: {
         current: number;
         total: number;

@@ -1,9 +1,6 @@
+import { g as getDefaultExportFromCjs } from '../shared/whats-that-tech-js-sdk.BFTU3MAI.mjs';
 import require$$0 from 'tty';
 import require$$1 from 'util';
-
-function getDefaultExportFromCjs (x) {
-	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-}
 
 var src = {exports: {}};
 
@@ -1059,8 +1056,8 @@ var srcExports = requireSrc();
 const index = /*@__PURE__*/getDefaultExportFromCjs(srcExports);
 
 const index$1 = {
-	__proto__: null,
-	default: index
+  __proto__: null,
+  default: index
 };
 
 export { index$1 as i };

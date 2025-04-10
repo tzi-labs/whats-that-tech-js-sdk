@@ -1,5 +1,6 @@
 'use strict';
 
+const _commonjsHelpers = require('../shared/whats-that-tech-js-sdk.BJu3ubxk.cjs');
 const require$$0 = require('tty');
 const require$$1 = require('util');
 
@@ -7,10 +8,6 @@ function _interopDefaultCompat (e) { return e && typeof e === 'object' && 'defau
 
 const require$$0__default = /*#__PURE__*/_interopDefaultCompat(require$$0);
 const require$$1__default = /*#__PURE__*/_interopDefaultCompat(require$$1);
-
-function getDefaultExportFromCjs (x) {
-	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-}
 
 var src = {exports: {}};
 
@@ -1063,11 +1060,11 @@ function requireSrc () {
 }
 
 var srcExports = requireSrc();
-const index = /*@__PURE__*/getDefaultExportFromCjs(srcExports);
+const index = /*@__PURE__*/_commonjsHelpers.getDefaultExportFromCjs(srcExports);
 
 const index$1 = {
-	__proto__: null,
-	default: index
+  __proto__: null,
+  default: index
 };
 
 exports.index = index$1;
