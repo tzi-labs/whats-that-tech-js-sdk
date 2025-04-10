@@ -3,6 +3,7 @@ import fs, { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+const isDevelopment = process.env.NODE_ENV === "development";
 async function loadFingerprints() {
   const localCorePath = join(process.cwd(), "core");
   const nodeModulesCorePath = join(process.cwd(), "node_modules/whats-that-tech-core");
@@ -10,7 +11,9 @@ async function loadFingerprints() {
   const rootCorePath = join(process.cwd(), "core.json");
   if (existsSync(localCorePath) || existsSync(nodeModulesCorePath)) {
     const sourcePath = existsSync(localCorePath) ? localCorePath : nodeModulesCorePath;
-    console.log("Loading fingerprints from:", sourcePath);
+    if (isDevelopment) {
+      console.log("Loading fingerprints from:", sourcePath);
+    }
     const techDirs = await readdir(sourcePath);
     const fingerprints = {};
     for (const tech of techDirs) {
@@ -24,33 +27,47 @@ async function loadFingerprints() {
             const fingerprintPath = join(techPath, file);
             const content = await readFile(fingerprintPath, "utf-8");
             fingerprints[tech] = JSON.parse(content);
-            console.log(`Loaded fingerprint for ${tech}`);
+            if (isDevelopment) {
+              console.log(`Loaded fingerprint for ${tech}`);
+            }
           }
         }
       } catch (error) {
-        console.error(`Failed to load fingerprint for ${tech}:`, error);
+        if (isDevelopment) {
+          console.error(`Failed to load fingerprint for ${tech}:`, error);
+        }
       }
     }
-    if (Object.keys(fingerprints).length === 0) {
-      console.warn("No fingerprints loaded from development mode");
-    } else {
-      console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from development mode`);
-      return fingerprints;
+    if (isDevelopment) {
+      if (Object.keys(fingerprints).length === 0) {
+        console.warn("No fingerprints loaded from development mode");
+      } else {
+        console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from development mode`);
+      }
     }
+    return fingerprints;
   }
   try {
     const corePath = existsSync(distCorePath) ? distCorePath : rootCorePath;
     if (existsSync(corePath)) {
-      console.log("Loading fingerprints from:", corePath);
+      if (isDevelopment) {
+        console.log("Loading fingerprints from:", corePath);
+      }
       const content = await readFile(corePath, "utf-8");
       const fingerprints = JSON.parse(content);
-      console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from core.json`);
+      if (isDevelopment) {
+        console.log(`Loaded ${Object.keys(fingerprints).length} fingerprints from core.json`);
+      }
       return fingerprints;
     }
   } catch (error) {
-    console.error("Failed to load core.json:", error);
+    if (isDevelopment) {
+      console.error("Failed to load core.json:", error);
+    }
   }
-  console.error("No fingerprints could be loaded from any source");
+  if (isDevelopment) {
+    console.error("No fingerprints could be loaded from any source");
+  }
   return {};
 }
 
