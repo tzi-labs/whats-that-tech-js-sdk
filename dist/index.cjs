@@ -1,7 +1,7 @@
 'use strict';
 
 require('puppeteer');
-const index = require('./shared/whats-that-tech-js-sdk.CvWPxOjD.cjs');
+const index = require('./shared/whats-that-tech-js-sdk.D9oEUfJx.cjs');
 require('fs/promises');
 require('path');
 require('url');

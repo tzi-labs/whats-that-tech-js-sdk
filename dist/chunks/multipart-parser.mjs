@@ -1,4 +1,4 @@
-import { F as FormData, a as File } from '../shared/whats-that-tech-js-sdk.Cnwwo-3j.mjs';
+import { F as FormData, a as File } from '../shared/whats-that-tech-js-sdk.Cbf7xzjQ.mjs';
 import 'puppeteer';
 import 'fs/promises';
 import 'path';

@@ -2,11 +2,9 @@
   "facebook-pixel": {
     "name": "facebook-pixel",
     "categories": [
-      "pixel",
-      "marketing"
+      "analytics"
     ],
     "detectors": {
-      "requestUrlRegex": "connect\\.facebook\\.net/.*/fbevents\\.js",
       "globalVariables": [
         "fbq"
       ]
@@ -14,37 +12,24 @@
   },
   "framer": {
     "name": "framer",
+    "categories": [
+      "cms"
+    ],
     "detectors": {
       "metaTagCheck": {
         "name": "generator",
         "contentRegex": "Framer"
-      },
-      "selectorExists": [
-        "[data-framer-name]",
-        "[data-framer-component-type]",
-        "div[data-framer-page-wrapper]"
-      ],
-      "requestUrlRegex": [
-        "events\\.framer\\.com/script"
-      ]
+      }
     }
   },
   "google-analytics": {
     "name": "google-analytics",
     "categories": [
-      "pixel",
       "analytics"
     ],
     "detectors": {
-      "globalVariables": [
-        "gtag",
-        "ga",
-        "GoogleAnalyticsObject",
-        "__gaTracker"
-      ],
       "requestUrlRegex": [
         "google-analytics\\.com/analytics\\.js",
-        "googletagmanager\\.com/gtag/js",
         "google-analytics\\.com/collect",
         "analytics\\.google\\.com"
       ]
@@ -52,63 +37,64 @@
   },
   "google-tag-manager": {
     "name": "google-tag-manager",
+    "categories": [
+      "tag-managers"
+    ],
     "detectors": {
       "globalVariables": [
         "dataLayer",
         "google_tag_manager"
-      ],
-      "requestUrlRegex": [
-        "googletagmanager\\.com/gtm\\.js",
-        "googletagmanager\\.com/ns\\.html"
       ]
     }
   },
   "gtag": {
     "name": "gtag",
+    "categories": [
+      "analytics"
+    ],
     "detectors": {
       "globalVariables": [
         "gtag"
-      ],
-      "requestUrlRegex": [
-        "googletagmanager\\.com/gtag/js",
-        "google-analytics\\.com/g/collect"
       ]
     }
   },
   "hotjar": {
     "name": "hotjar",
+    "categories": [
+      "analytics"
+    ],
     "detectors": {
       "globalVariables": [
         "hj",
-        "hjSiteSettings",
-        "_hjSettings"
-      ],
-      "requestUrlRegex": [
-        "static\\.hotjar\\.com/c/hotjar-",
-        "vars\\.hotjar\\.com",
-        "script\\.hotjar\\.com",
-        "in\\.hotjar\\.com/api/v2/client/sites"
+        "hjSiteSettings"
       ]
     }
   },
   "klaviyo": {
     "name": "klaviyo",
+    "categories": [
+      "analytics"
+    ],
     "detectors": {
       "globalVariables": [
-        "_learnq",
-        "Klaviyo"
+        "_learnq"
       ],
       "requestUrlRegex": [
         "a\\.klaviyo\\.com/media/js/analytics/analytics\\.js",
         "static\\.klaviyo\\.com/onsite/js/klaviyo\\.js",
         "static\\.klaviyo\\.com/onsite/js/klaviyo\\.min\\.js",
         "a\\.klaviyo\\.com/api/identify",
-        "a\\.klaviyo\\.com/api/track"
+        "a\\.klaviyo\\.com/api/track",
+        "fast\\.a\\.klaviyo\\.com",
+        "static-forms\\.klaviyo\\.com"
       ]
     }
   },
   "next": {
     "name": "next",
+    "categories": [
+      "framework"
+    ],
     "detectors": {
       "globalVariables": [
         "next"
@@ -118,6 +104,9 @@
   },
   "nuxt": {
     "name": "nuxt",
+    "categories": [
+      "framework"
+    ],
     "detectors": {
       "globalVariables": [
         "__NUXT__",
@@ -134,8 +123,7 @@
   "react": {
     "name": "react",
     "categories": [
-      "framework",
-      "frontend"
+      "framework"
     ],
     "detectors": {
       "globalVariables": [
@@ -152,6 +140,9 @@
   },
   "segment": {
     "name": "segment",
+    "categories": [
+      "analytics"
+    ],
     "detectors": {
       "globalVariables": [
         "analytics",
@@ -183,6 +174,9 @@
   },
   "squarespace": {
     "name": "squarespace",
+    "categories": [
+      "cms"
+    ],
     "detectors": {
       "globalVariables": [
         "Squarespace"
@@ -199,40 +193,31 @@
   },
   "statamic": {
     "name": "statamic",
+    "categories": [
+      "cms"
+    ],
     "detectors": {
-      "metaTagCheck": {
-        "name": "generator",
-        "contentRegex": "Statamic"
-      },
-      "globalVariables": [
-        "Statamic"
-      ],
-      "selectorExists": [
-        "[data-statamic]",
-        "[data-statamic-field]",
-        "[data-statamic-handler]"
+      "cookieCheck": [
+        "statamic_session"
       ]
-    },
-    "themeDetection": {
-      "cssLinkRegex": "/themes/([\\w-]+)/"
     }
   },
   "svelte": {
     "name": "svelte",
+    "categories": [
+      "framework"
+    ],
     "detectors": {
       "globalVariables": [
-        "__sveltekit",
-        "__SVELTEKIT_DEV__"
-      ],
-      "selectorExists": [
-        "[data-sveltekit]",
-        "[data-sveltekit-preload-data]",
-        "[data-sveltekit-reload]"
+        "__svelte"
       ]
     }
   },
   "vue": {
     "name": "vue",
+    "categories": [
+      "framework"
+    ],
     "detectors": {
       "globalVariables": [
         "Vue",
@@ -248,6 +233,9 @@
   },
   "webflow": {
     "name": "webflow",
+    "categories": [
+      "cms"
+    ],
     "detectors": {
       "globalVariables": [
         "Webflow"
@@ -266,6 +254,9 @@
   },
   "wix": {
     "name": "wix",
+    "categories": [
+      "cms"
+    ],
     "detectors": {
       "globalVariables": [
         "wixBiSession",
@@ -282,6 +273,9 @@
   },
   "wordpress": {
     "name": "wordpress",
+    "categories": [
+      "cms"
+    ],
     "detectors": {
       "metaTagCheck": {
         "name": "generator",

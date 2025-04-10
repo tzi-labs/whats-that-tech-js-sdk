@@ -1,5 +1,5 @@
 import 'puppeteer';
-export { f as findTech } from './shared/whats-that-tech-js-sdk.Cnwwo-3j.mjs';
+export { f as findTech } from './shared/whats-that-tech-js-sdk.Cbf7xzjQ.mjs';
 import 'fs/promises';
 import 'path';
 import 'url';
